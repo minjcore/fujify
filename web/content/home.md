@@ -55,3 +55,5 @@ preview**, and export the whole set of social crops in one click.
 
 Editing is **free**. You pay only to **keep** — cloud storage for your originals.
 Free tier shows ads; **Premium removes them.**
+
+[See full pricing →](#/pricing)
