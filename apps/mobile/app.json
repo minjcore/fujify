@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Fuji-Fy",
+    "slug": "fuji-fy",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Fuji-Fy uses your photos when you import an image.",
+          "savePhotosPermission": "Fuji-Fy saves the processed image to your gallery when you tap Save.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
+    ],
+    "android": {
+      "package": "app.fujify.mobile",
+      "usesCleartextTraffic": true,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "app.fujify.mobile",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Fujify uses your photos when you import an image.",
+        "NSPhotoLibraryAddUsageDescription": "Fujify saves processed images to your photo library."
+      },
+      "appleTeamId": "V54SXH3H56"
+    }
+  }
+}

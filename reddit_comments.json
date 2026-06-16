@@ -1,0 +1,1699 @@
+{
+  "scrapedAt": "2026-04-06T15:34:06.535Z",
+  "source": "reddit",
+  "count": 150,
+  "threadingEnabled": true,
+  "comments": [
+    {
+      "text": "Looks really promising. I tried it out and it is really fast.\n\n  \nA few points that I noticed:  \n\\- Slider for Whites and Blacks is currently counterintuitive, when I slide to the ritght it gets darker instead of lighter\n\n\\- When I push the shadows to the right it does not look brighter just a grey haze over the image\n\n\\- For every option you should add a function to reset to default, currently you need to do this manually which is frustrating especially for the curves\n\n\\- Masks work fine, just would be great if there could be a warning that the subject (AI) mask is currently not implemented, just like for the AI tab\n\n\\- Maybe add a 5:4 aspect ratio as this gets often used for Instagram (at least it was, I am not that active)\n\n  \nReally looking forward to the progress of this program",
+      "author": "InfiniteSys",
+      "timestamp": "2025-06-29T17:59:05.000Z",
+      "links": [],
+      "score": 172,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thanks for your feedback and yes, I’m aware of the Whites/Blacks bug - I had actually forgotten about it over time, but I’ll be fixing it soon.\n\n&gt;\n\nThere *is* a reset option already — you can double-click the header/title of the setting to reset it. I realize that’s a bit different from how Lightroom does it, so I’ll try to make that more intuitive or better documented.\n\nI’ll also be adding a warning for unsupported masks soon - or maybe I’ll just go ahead and implement them, haha.\n\nThe 5:4 aspect ratio is a great suggestion and will definitely be included in the next release.\n\nThanks again for your feedback - it’s incredibly helpful and much appreciated!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:03:29.000Z",
+      "links": [],
+      "score": 87,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Okay, found the reset option. Maybe it would be enough to change the mouse cursor when you are hovering above the header / title. Currently it looks just like a text and not something that you would click on.",
+      "author": "InfiniteSys",
+      "timestamp": "2025-06-29T18:16:07.000Z",
+      "links": [],
+      "score": 24,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Great idea, I will try out some options and see what works best. Next release should include this :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:27:57.000Z",
+      "links": [],
+      "score": 18,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Designer here: simple buttons are always the most usable. A dialog to confirm is also great (if not already included)",
+      "author": "cinderful",
+      "timestamp": "2025-06-30T18:53:51.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thanks! A simple rotate / reset icon button is there now :) Dialog isn't needed for simple adjustments and for dangerous operations (such as deleting an image or a folder), a dialog exists.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T18:55:52.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I just tried to run it but saw it's not working/signed on macOS yet :(\n\nUnfortunately, ripping out a build locally on my own is probably not high on my to do list.",
+      "author": "cinderful",
+      "timestamp": "2025-06-30T20:02:17.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 6,
+      "threadLevel": 6,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "You can just paste this terminal command (as shown in the latest release readme) to bypass the signing check, if you're ok with that.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T20:29:56.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 7,
+      "threadLevel": 7,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "[removed]",
+      "author": "[deleted]",
+      "timestamp": "2025-06-30T11:03:15.000Z",
+      "links": [],
+      "score": 10,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Hahah I already created this small ⟳ next to the title yesterday evening, after this comment. It's already there now :) Thanks tho",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T11:08:09.000Z",
+      "links": [],
+      "score": 6,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "[removed]",
+      "author": "[deleted]",
+      "timestamp": "2025-06-30T14:04:43.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thank you!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T14:43:29.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Most of what you asked for is implemented now except for the mask warning and the grey haze :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:22:01.000Z",
+      "links": [],
+      "score": 13,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "https://preview.redd.it/khdzw3pmv3af1.png?width=480&amp;format=png&amp;auto=webp&amp;s=5aa0da9f71282893fcb31e06250776dbe2f818f9\n\nAI masks will work soon. I have it correctly implemented locally and I just need to fix some minor bugs and cleanup before I will release it.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T18:14:54.000Z",
+      "links": [
+        "https://preview.redd.it/khdzw3pmv3af1.png?width=480&amp;format=png&amp;auto=webp&amp;s=5aa0da9f71282893fcb31e06250776dbe2f818f9"
+      ],
+      "score": 6,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Just now had time to test the AI masks and currently I do not think that they are usable. Especially humans seem to never be detected. But also simple things linke a big hat were not detected by the AI mask.  \nStill very impressive :)",
+      "author": "InfiniteSys",
+      "timestamp": "2025-07-02T14:36:59.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Hey! Quick update: I found out that the misbehavior with AI masks is related to the RAW format. I created a new release which fixes this. AI masks should work now a lot better for you. Would be cool to get a short feedback if it works now. Release will be up in the next 20mins :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-03T20:38:32.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Works a lot better now :)",
+      "author": "InfiniteSys",
+      "timestamp": "2025-07-04T15:58:16.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Amazing! Thanks a lot for the feedback 👌",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-04T16:21:53.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "You are drawing around them and not clicking on them, right? Thanks for the feedback. Another dude told me they are better than Lightroom’s object mask so I‘m a bit confused now.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-02T14:47:11.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Did you use it like this?\n\nhttps://i.redd.it/ayvcuz7q8haf1.gif",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-02T15:10:55.000Z",
+      "links": [
+        "https://i.redd.it/ayvcuz7q8haf1.gif"
+      ],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yeah, thats how I did it, it did work on some pictures but more often than not it was unreliable. See video:  \n[https://www.youtube.com/watch?v=PnOe-XOYEKU](https://www.youtube.com/watch?v=PnOe-XOYEKU)",
+      "author": "InfiniteSys",
+      "timestamp": "2025-07-02T17:57:31.000Z",
+      "links": [
+        "https://www.youtube.com/watch?v=PnOe-XOYEKU"
+      ],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Okay I see the problem. I will check it with a similar file soon and hopefully provide a fix somewhat soon.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-02T20:14:41.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Impressive. You should share it over on https://discuss.pixls.us as well.\n\nOn my phone, so haven't had a good look at it yet, but it seems that it only has a dark and a light theme. That's not ideal, since both will negatively affect your perception of saturation, brightness and contrast. The darktable faq has more details: https://www.darktable.org/about/faq/#faq-grey-interface",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T17:02:30.000Z",
+      "links": [
+        "https://discuss.pixls.us",
+        "https://www.darktable.org/about/faq/#faq-grey-interface"
+      ],
+      "score": 43,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "https://preview.redd.it/pgwkt1u9hw9f1.png?width=1919&amp;format=png&amp;auto=webp&amp;s=602fbba7cea2f2a1216e52692b1771ce73933d56\n\nIt's implemented now:  \n\n\nThanks again for the suggestion",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:21:43.000Z",
+      "links": [
+        "https://preview.redd.it/pgwkt1u9hw9f1.png?width=1919&amp;format=png&amp;auto=webp&amp;s=602fbba7cea2f2a1216e52692b1771ce73933d56"
+      ],
+      "score": 40,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Is the photo from Glaubenberg in Switzerland?",
+      "author": "Slasher-McGee",
+      "timestamp": "2025-06-29T20:44:33.000Z",
+      "links": [],
+      "score": 6,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yes it is - its a beautiful location, especially in autumn / winter",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:49:23.000Z",
+      "links": [],
+      "score": 11,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yeah, true! I live 20 minutes from there in another beautiful region :)",
+      "author": "Slasher-McGee",
+      "timestamp": "2025-06-29T20:51:41.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Nice hahaha I actually also live about ~45min from there",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:52:28.000Z",
+      "links": [],
+      "score": 7,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Haha geil. Mach wiiter mit dim Programm, isch e geili Sach. Wirds definitiv usprobiere, wenns denn mal uf MacOS lauft :)",
+      "author": "Slasher-McGee",
+      "timestamp": "2025-06-29T20:58:00.000Z",
+      "links": [],
+      "score": 7,
+      "depth": 6,
+      "threadLevel": 6,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Merci :) Ech pinge dich wenns denn endlech uf MacOS lauft 👌  aktuell hani eifach no metem Apple Code Signierigs Zertifikat problem, im grundsatz laufts uf MacOS",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T21:07:27.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 7,
+      "threadLevel": 7,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Wörd jetzt uf MacOS laufe, muesch eifach vorher no en Terminal befehl usfüehre, um das unsignierte programm z'approve.   \nWird im neuste Release erklärt: [Release RapidRAW v1.0.13](https://github.com/CyberTimon/RapidRAW/releases/tag/v1.0.13)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T09:06:57.000Z",
+      "links": [
+        "https://github.com/CyberTimon/RapidRAW/releases/tag/v1.0.13"
+      ],
+      "score": 3,
+      "depth": 7,
+      "threadLevel": 7,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Cool :) Denn probier ich das mal us die Wuche.\nHan der no en Follow uf Insta da glah :) Machsch würkli gueti Arbet!",
+      "author": "Slasher-McGee",
+      "timestamp": "2025-06-30T09:54:02.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 8,
+      "threadLevel": 8,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thank you very much for your feedback. This is exactly what I'm looking for.  \nI plan to share it later on [pixls.us](http://pixls.us) too. \n\nRegarding the grey theme. That's a very good idea and I will implement it very soon.  \nI actually have about 6-8 themes to choose from as of right now, but none of them are really flat / grey what some people might be looking for.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:05:15.000Z",
+      "links": [
+        "http://pixls.us"
+      ],
+      "score": 8,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Very impressive in two weeks.\nBut do you have try other Opensource software like https://www.rawtherapee.com ?",
+      "author": "xmillies",
+      "timestamp": "2025-06-29T16:43:23.000Z",
+      "links": [
+        "https://www.rawtherapee.com"
+      ],
+      "score": 58,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Yes I tried this and also Darktable. As I wanted to learn a new framework (React / Rust), understand how cameras (especially the raw part) works and create a new project in general I set this as a challenge for myself. Thanks for looking at it :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T16:45:23.000Z",
+      "links": [],
+      "score": 75,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "You're doing great! \n\nI love and use both RawTherapee &amp; Darktable. What I love about yours is the interface is fairly easy to use/self explanatory. Darktable and RT are really powerful but it can suck watching long tutorials or reading wikis - trying to work out fairly simple functions.",
+      "author": "H3rBz",
+      "timestamp": "2025-06-30T07:02:58.000Z",
+      "links": [],
+      "score": 11,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I was ready to begin my journey with one of these two programs but they seem overwhelming even though I'd be coming from Lightroom. lol  \nHow long did it take you to become familiar with these two?",
+      "author": "TopSlice3396",
+      "timestamp": "2025-07-24T17:58:35.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "One is a programming language the other a library, which framework are you talking about here?\n\nNice project kid. Keep at it!",
+      "author": "ScrattleGG",
+      "timestamp": "2025-06-29T18:26:38.000Z",
+      "links": [],
+      "score": 19,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Haha yes you're right. I wanted to say Tauri as the framework but the main part which I planned to learn was the programming language + react library.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:29:58.000Z",
+      "links": [],
+      "score": 16,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Nice work!\n\nNow that you've done this, do you plan to keep building it and improving it to the point where the OS community starts picking it up?\n\nOr was this a \"This is cool, I learned a lot, hopefully someone forks this and keeps working on it because I'm bored with it now and I'm on to the next project!\" type of project? There's no shame in that, I've done that with many projects. Just curious what you see as the future for this though?",
+      "author": "SoCalChrisW",
+      "timestamp": "2025-06-30T16:54:33.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "That's a great question. I work on improving it whenever I have the time and motivation, though I can’t make any promises - I've left quite a few projects unfinished in the past. That said, I see a lot of potential in this one, and the positive feedback from the community has been a big motivator to keep going.  \nThanks for your support!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T17:14:52.000Z",
+      "links": [],
+      "score": 9,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "What are your thoughts on Darktable? I've been contemplating ditching Lightroom for years, but I haven't made the leap.",
+      "author": "pitviper101",
+      "timestamp": "2025-06-30T14:44:53.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Darktable is a solid software for sure. But I prefer software which is smooth and has an clean, modern UI which is why I created RapidRAW. I prefer to work with a smooth, clean and simple software, even if it doesn’t‘t produce 100% color accurate results.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T14:49:32.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "It's terrible if you're accustomed to Lightroom, honestly. And even if you aren't, it's objectively terrible in many ways.",
+      "author": "Sharlinator",
+      "timestamp": "2025-06-30T15:27:16.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Oh man, those guys need to pick a new domain/product name\n\nhttps://static.wikia.nocookie.net/arresteddevelopment/images/e/e3/3x03_Forget-Me-Now_%2812%29.png/revision/latest?cb=20130320220337",
+      "author": "HugsAllCats",
+      "timestamp": "2025-06-29T19:07:53.000Z",
+      "links": [
+        "https://static.wikia.nocookie.net/arresteddevelopment/images/e/e3/3x03_Forget-Me-Now_%2812%29.png/revision/latest?cb=20130320220337"
+      ],
+      "score": 22,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "FOSS devs are the absolute worst at naming products.",
+      "author": "Interstate8",
+      "timestamp": "2025-06-29T19:42:39.000Z",
+      "links": [],
+      "score": 18,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Naming things is hard.",
+      "author": "cmickledev",
+      "timestamp": "2025-06-29T21:05:56.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Throwback to when a project was called Crackpipe.\n\n\nTo be fair, it was for downloading cracked game, so it's actually kind of clever... But still. ",
+      "author": "MrHaxx1",
+      "timestamp": "2025-06-30T15:44:05.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "WTF is that domain name",
+      "author": "foghornjawn",
+      "timestamp": "2025-06-29T21:56:26.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Kid, take it from an old-timer, I think you're goin' places.\n\n\nKeep creating and happy shooting to you.",
+      "author": "kenerling",
+      "timestamp": "2025-06-29T16:59:55.000Z",
+      "links": [],
+      "score": 82,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "do you have any plans to include negative conversion? last time I did this in darktable it was a pain in the ass, especially with picking the correct base color settings for the film, to get proper colors and such",
+      "author": "wulfithewulf",
+      "timestamp": "2025-06-29T17:59:36.000Z",
+      "links": [],
+      "score": 10,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Have a look at Filmvert. It's apparently really good.\n\n[https://github.com/montoyatim01/Filmvert](https://github.com/montoyatim01/Filmvert)",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T20:41:20.000Z",
+      "links": [
+        "https://github.com/montoyatim01/Filmvert"
+      ],
+      "score": 7,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "that looks promising, thank you :)",
+      "author": "wulfithewulf",
+      "timestamp": "2025-06-29T21:27:04.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I have now put this on my todo list. I didn't even realize this is a thing as I never used this in Lightroom or other editing softwares :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:27:09.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "That’s awesome! Any plans for Mac?",
+      "author": "curiousjosh",
+      "timestamp": "2025-06-29T17:40:28.000Z",
+      "links": [],
+      "score": 9,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Yes actually- I already provide MacOS builds and tested it a lot on my MacBook Pro. Sadly I don't have a code signing certificate from apple yet so your Mac device will reject it.  \nIf you still want to try it out you can build it from source using the simple tutorial in the readme ([Getting Started](https://github.com/CyberTimon/RapidRAW?tab=readme-ov-file#getting-started))  \nThanks\n\nEDIT: In the newest release is a short terminal command, which will make the current, precompiled builds work on MacOS.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:42:44.000Z",
+      "links": [
+        "https://github.com/CyberTimon/RapidRAW?tab=readme-ov-file#getting-started"
+      ],
+      "score": 22,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Any plans for iPadOS? How difficult is it to port from macOS to that? ",
+      "author": "FillMySoupDumpling",
+      "timestamp": "2025-06-30T08:57:33.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Should be possible althrough it's not a priority at the moment. I currently have a big focus on core features such as AI stuff etc. Later I can extend it on other platforms such as iPadOS. Tauri, the main framework, supports it already, so it shouldn't be that hard to implement.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T09:03:59.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Great to hear! Keep up the good work!",
+      "author": "FillMySoupDumpling",
+      "timestamp": "2025-06-30T14:49:35.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "For some reason when I try to run it it crashed.",
+      "author": "swotai",
+      "timestamp": "2025-07-01T05:48:30.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thanks for trying out. What device do you have? / Do older releases (e.g. lower than 1.1.0) work? I will try to run it on my MacBook this evening to see if I also run into issues.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T06:11:36.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I have a Mac mini M4 base.  tried the previous version 1.0.13 works.",
+      "author": "swotai",
+      "timestamp": "2025-07-01T21:20:35.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thanks for the clarification. In the meantime the bug is fixed in the newest release.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-02T07:11:40.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Looks like you’re using LibRaw under the hood, so you’re still ultimately tied to dcraw’s demosaic and color science, with no support for compressed CR3, right? Curious if you’re layering anything custom on top of that, or if it’s mainly UI and GPU acceleration over the standard pipeline.",
+      "author": "v270",
+      "timestamp": "2025-06-29T18:30:53.000Z",
+      "links": [],
+      "score": 14,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "I'm actually using a modified / improved version of the rust rawloader project ([pedrocr/rawloader](https://github.com/pedrocr/rawloader)). It doesn't support CR3 probably, as rawloader itself doesn't support it.   \nI will probably, depending on how complex it is, try to support it in the future, as I already was able to implement support for DJI Mavic 3 / 4 Pro's RAW files, which uses a special version of ljepg predictor 6.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:36:25.000Z",
+      "links": [
+        "https://github.com/pedrocr/rawloader"
+      ],
+      "score": 13,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Consider using Rawler from DNGLab instead. It's already an improved fork of rawloader.\n\n[https://github.com/dnglab/dnglab](https://github.com/dnglab/dnglab)",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T20:38:12.000Z",
+      "links": [
+        "https://github.com/dnglab/dnglab"
+      ],
+      "score": 14,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Amazing - thanks for sharing. I will look into it in the coming days!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:39:12.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "By contributing to Rawler you also help other projects, such as vkdt, that uses it. I'm not sure having yet another raw loader library used by a single project serves anyone.",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T20:58:29.000Z",
+      "links": [],
+      "score": 10,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "While pedrocr/rawloader says it supports Sony ARW - it doesn't for me (v1.1.1)",
+      "author": "fruchle",
+      "timestamp": "2025-07-03T05:04:46.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "What exact camera do you have? I have a A7iii and its RAW images work perfectly. Its probably best to wait 1-2 days until I implemented the new rawloader. Thanks :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-03T05:06:11.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "A7RIV, and sure thing.",
+      "author": "fruchle",
+      "timestamp": "2025-07-03T09:21:01.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Makes sense - this camera uses a new ARW version which this outdated loader doesnt support. Will be fixed in further releases.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-03T09:46:58.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "does it support cr3 please?",
+      "author": "danielsuperone",
+      "timestamp": "2025-10-10T15:53:10.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yes it works now 😃",
+      "author": "zBlackVision11",
+      "timestamp": "2025-10-10T15:57:36.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Seems really cool! I'll check it out and compare it to DxO PhotoLab soon.\n\nFeature request: I usually come home with thousands of files as I shoot in burst mode all the time (wildlife photography). At home I need to go through all of them and rate them. I'd love a special mode where one can rate (1-5), zoom in and quickly hop back and forth between photos. Not anything else to keep it super fast, but every function should have a simple keybind (i.e rating with number keys 1-5, hopping back and forth with arrow keys, and keybinds for \"fit to frame\", \"100%\" and \"200%\", while zoomed the photo could be moved with the mouse).",
+      "author": "SnoopySenpai",
+      "timestamp": "2025-06-29T17:47:08.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thank you for your feedback. Keybinds for rating (1-5) and keybinds for hopping between images (arrow keys) actually already exist. I will soon add some shortcuts for zooming too.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:54:50.000Z",
+      "links": [],
+      "score": 10,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Awesome.\nLooking forward to trying it.",
+      "author": "SnoopySenpai",
+      "timestamp": "2025-06-29T18:06:01.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Could you tell me more about how which language you learned first, how you learned it, etc? I hadn't heard of WGSL and looked it up, apparently the syntax is similar to Rust. Had you used WGSL before starting this project?\n\nBefore learning to use React, did you learn the basics of HTML/CSS/Javascript by themselves or did you learn it in the context of React? \n\nI'd love to learn about programming too and I think you did something really smart and creative and found a good goal which motivated you. I hope you have some time to share more about your learning process. (Not just the two weeks, but earlier stuff too.)",
+      "author": "Commercial_Sun_6300",
+      "timestamp": "2025-06-29T18:31:43.000Z",
+      "links": [],
+      "score": 6,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thanks for the nice feedback! I started learning HTML, CSS, and JavaScript about three years ago. After that, I got into making games with Unity and Unreal Engine. Even though Unreal uses a node-based system, it still helped me understand a lot about how programming works.\n\nWhen ChatGPT came out, I got really interested in Python and machine learning / training of language models. Since then, I’ve been learning other languages like Rust and JavaScript libraries like React. I enjoy building small projects with language models, and I really like making simple remakes of other programms or implement already existing stuff on my own, with help of language models.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:29:29.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Impressive. Waiting for the Linux port… ;-)",
+      "author": "cialu",
+      "timestamp": "2025-06-29T19:26:01.000Z",
+      "links": [],
+      "score": 6,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thank you! Will be there soon. It shouldn't be hard to implement.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T19:31:17.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "An impressive feat and great demo what can nowadays be achieved with AI.",
+      "author": "pragmatick",
+      "timestamp": "2025-06-29T17:49:07.000Z",
+      "links": [],
+      "score": 11,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thank you!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:57:57.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "so... before I download, does it work with ALL raw files or just the major players like Sony, Canon, Olympus, and Nikon?  I ask because I shoot MF digital and it's *different*.  It drove me to RawTherapee as I also am moving to Linux for daily work.  Can provide leaf and Phase one IQ files if you'd like to push it more.  DM me.",
+      "author": "NotJebediahKerman",
+      "timestamp": "2025-06-29T18:00:34.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "I use a modified / improved version of [pedrocr/rawloader](https://github.com/pedrocr/rawloader) to load / read the raw files from different manufacturers and it looks like it doesn't support it (yet - althrough the project looks stalled). Would be cool if you could send me some demo files - then I can try to implement it when I have time.  \nThanks!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T18:06:42.000Z",
+      "links": [
+        "https://github.com/pedrocr/rawloader"
+      ],
+      "score": 3,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "It looks like it doesn't support Canon CR3 files yet? Or am I missing something?",
+      "author": "Taidashar",
+      "timestamp": "2025-06-29T18:57:58.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "You see this correct. It doesn't support Canon CR3 files yet. I just found this issue on the rawloader github: [CR3 support · Issue #23 · pedrocr/rawloader](https://github.com/pedrocr/rawloader/issues/23)\n\nI might take a look how it's implemented in dnglab and try to port this over to my RapidRAW rawloader.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T19:28:54.000Z",
+      "links": [
+        "https://github.com/pedrocr/rawloader/issues/23"
+      ],
+      "score": 6,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Damn, that's a shame. That project definitely seems stalled then, since CR3 has been around since 2018 lol.\n\nWould be pretty sweet if you could get it working. I downloaded RapidRAW and it looks great (dug up some old cr2 files to give it a test) but without CR3 support it's useless for me (and basically everyone else using a Canon mirrorless camera)\n\nGreat work on this project though, very impressive especially considering the timeframe!",
+      "author": "Taidashar",
+      "timestamp": "2025-06-29T19:54:39.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yes I try to implement it in the coming days. I will respond here when it's working. Stay tuned :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T20:25:12.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "ah thanks, wondered why my cr3 files weren't working",
+      "author": "Lozula",
+      "timestamp": "2025-07-02T22:59:16.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 6,
+      "threadLevel": 6,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "The project is so old it doesn't support Nikon Z cameras.",
+      "author": "kendrid",
+      "timestamp": "2025-06-29T21:52:47.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "CR3 support is there now :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-05T07:44:02.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Awesome! I will give it a try",
+      "author": "Taidashar",
+      "timestamp": "2025-07-10T10:29:03.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 6,
+      "threadLevel": 6,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "FYI the project is so old it doesn't support Nikon Z cameras.",
+      "author": "kendrid",
+      "timestamp": "2025-06-29T21:52:54.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I stumbled on this a month or two ago, looked interesting but more for the newer backs.  Their SDK for talking to the camera but it also has their image SDK as well [Phase one image/camera sdk](https://developer.phaseone.com/sdk/docs/classes.html).  \n\nI have plenty of pics I can share, just need to figure out how/where, these things are 60+ MB per raw file.",
+      "author": "NotJebediahKerman",
+      "timestamp": "2025-06-29T18:33:32.000Z",
+      "links": [
+        "https://developer.phaseone.com/sdk/docs/classes.html"
+      ],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "[raw.pixls.us](http://raw.pixls.us) is the place to submit samples if you want to help open-source software.",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T20:54:19.000Z",
+      "links": [
+        "http://raw.pixls.us"
+      ],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "uploaded - too many wires in the area for my liking and I didn't move to fix that.",
+      "author": "NotJebediahKerman",
+      "timestamp": "2025-06-30T03:32:45.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "There are probably already samples on [raw.pixls.us](http://raw.pixls.us) and if not, it would be great if u/NotJebediahKerman could change that.",
+      "author": "Donatzsky",
+      "timestamp": "2025-06-29T20:49:53.000Z",
+      "links": [
+        "http://raw.pixls.us"
+      ],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "You really ought to make your rawloader fork into its own repo so you preserve the proper history and attribution. You could include it as a git submodule instead.\n\nLooks neat, though!",
+      "author": "nobullvegan",
+      "timestamp": "2025-06-29T18:43:19.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "You're right. I initially just merged it into my project as I thought I would have to heavily rewrite it to make it more compatible (e.g. Mavic 3/4 Pro's DNG etc). I will definitely add proper attribution soon or use it as a submodule.  \nEDIT: Added proper attribution until I implement a better solution (e.g. submodule)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T19:30:34.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "If you're going for GPU acceleration it'd be also really handy to have support for a shading language.\n\nI switched to vkdt a few months ago and being able to write my own shaders has been tremendous, can't stress how much better a node based, HDR workflow has been.",
+      "author": "Yaroslav770",
+      "timestamp": "2025-06-29T19:39:38.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "How about Mac support?",
+      "author": "lucasnviana",
+      "timestamp": "2025-07-05T06:36:07.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I'm not the vkdt dev and I don't use a Mac so I can't help you there.",
+      "author": "Yaroslav770",
+      "timestamp": "2025-07-05T08:03:18.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Great work here - very impressive for two weeks. I'm on a Mac and had GPT lead me through compiling it and building the app package and was up and running in a couple of minutes.\n\nCouple of observations:  \n1) need to be able to disable the overlay on the mask to see what's happening on the local edits.  \n2) look at the fall-off on the sliders - the highlights for instance is pretty brutal - very all or nothing.  \n3) contrast is strongly affecting brightness  \n4) vibrance seems to skew heavily towards magenta - not sure why  \n5) would be great to get some chromatic aberration control\n\nAnyway - it's a really promising start and I genuinely hope you stick with it and continue to refine and build-out the app. I hope you stick to the Lightroom-like template and avoid the Darktable approach. I think you'll find that there's a massive potential audience for the app if you keep it this user-friendly.",
+      "author": "repomonkey",
+      "timestamp": "2025-06-30T00:50:26.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thank you for your feedback. That's really helpful. I try to improve it this evening in some of the areas you've described.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T13:44:05.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "That’s insane? You got any socials I can follow? You’re going places and I want to follow your journey.",
+      "author": "AirSKiller",
+      "timestamp": "2025-06-29T17:29:59.000Z",
+      "links": [],
+      "score": 8,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thanks a lot. You can follow me on instagram, where I post pictures from my photography trips quite often: [@timonkaech.photography](https://www.instagram.com/timonkaech.photography/)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:40:02.000Z",
+      "links": [
+        "https://www.instagram.com/timonkaech.photography/"
+      ],
+      "score": 7,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Just did.\n\nAmazing shots too!",
+      "author": "AirSKiller",
+      "timestamp": "2025-06-29T17:46:54.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I'll follow you now. \nI didn't download your program yet, I'll when it's one click to install on MacOs, but if it doesn't have tethering function, would you implement it?\n\nP.s. my compliments for all the work.",
+      "author": "Excentriekegast",
+      "timestamp": "2025-07-01T01:46:36.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thanks! What kind of tethering function are you looking for?",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T04:37:07.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Did so too.. your photos are amazing ",
+      "author": "UmbwaKaali",
+      "timestamp": "2025-07-09T17:43:17.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "&gt; File size is under 30MB, and it runs on Windows &amp; macOS.\n\nCross-platform editor that's smaller than a single raw file from many cameras out there.",
+      "author": "rpungello",
+      "timestamp": "2025-06-29T20:41:26.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Heh I was also building a similar gpu-accelerated project some time ago but seems you beat me by quite a margin lol. I think I'll just try to contribute to yours :)",
+      "author": "sacules",
+      "timestamp": "2025-06-30T15:00:52.000Z",
+      "links": [],
+      "score": 4,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thanks for your feedback. I‘m sure your project was also good. I also wouldn‘t have achieved this speed without the help of language models / ai. I appreciate if you want to contribute too :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T15:02:22.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Definitely! If you're also open to some UX/UI and react suggestions, I can open up an issue or two.\n\nQuick question, does it support other file formats like TIFF, BMP, and JPEG? I shoot film and my scans are in such formats. I'd also love to take a crack at a film inversion feature, as that was my goal originally heh.",
+      "author": "sacules",
+      "timestamp": "2025-06-30T15:07:27.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yes, if you have any suggestions etc, feel free to open a github issue.  \nAnother person already asked for the film inversion feature so I will probably code this pretty soon. It supports JPEG and BMP but not TIFF yet.  \n  \nThanks!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T15:56:48.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I just give it a try, and it seems super cool! It's honestly not super far from being able to replace Lightroom for me.\n\nHere's some feedback:\n\n* Please enable scroll wheel for sliders\n\n* I tried to crop an image, but for some reason, I couldn't zoom out far enough to actually grab the corner. Even if I zoomed out in another view, the crop view just zoomed in, for some reason. Image is 6020x4024\n\n* 1:1 crop is clearly not 1:1\n\n* Flip doesn't do anything\n\n* How do I use the AI mask?? I select it, but I can't actually mask anything\n\n* I tried to brush mask, but the effects applied to somewhere else on the image, on not where I had actually chosen it\n\n* please add shift/ctrl+scroll for quick brush size adjustment\n\n* There should probably a settings panel somewhere, at least for keyboard shortcuts and such\n\n* Lastly, add the app to Winget, so we can install it with \"Winget install CyberTimon.RapidRAW\". This also enables easier updates for Windows users.\n\nAnyway, this is still amazing for two weeks of work. Great job! I'll definitely be keeping an eye on it.",
+      "author": "MrHaxx1",
+      "timestamp": "2025-06-30T16:29:57.000Z",
+      "links": [],
+      "score": 5,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thank you a lot for testing it out and for your feedback. \n\n* How do you think is the best way to implement scroll wheel functionality for the sliders? Because the scroll is already used to scroll down the adjustments / controls panel.\n* Regarding the crop issue, I actually also had this problem and I'm working on a solution now, althrough I couldn't fix it for like the last 1-2 hours. \n* 1:1 crop should be 1:1, I will test with your image size soon to see if I can reproduce it. \n* AI masks aren't there yet and I will add a proper work in progress visualization soon.\n* Brush masks are a bit buggy as of right now, they definitely need more polishing. \n* Regarding the settings panel, there is one, but you can't change the keyboard settings there right now. \n* Yes I plan to add the app to more sources, like Winget, but I have to focus on the main priorities first.\n\nThank you again for the feedback!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T16:35:12.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "&gt;How do you think is the best way to implement scroll wheel functionality for the sliders? Because the scroll is already used to scroll down the adjustments / controls panel.\n\nThat's a good point. I see two options: Either put it in a very specific location (like the textbox), so there's low risk of it disabling scrolling, or have it be enabled by alt/shift/ctrl.\n\n&gt;1:1 crop should be 1:1, I will test with your image size soon to see if I can reproduce it.\n\nThanks. I don't know if it's maybe related to the same zoom bug?\n\n&gt;settings\n\nOh, yeah, I found it now. I don't think it's particularly intuitive to have to go all the way \"out\" of the application to access it, tbh. I'd be fine with having it in a corner somewhere. But I suppose that there aren't enough settings at the moment, to justify having it elsewhere.\n\nMore feature requests:\n\n* Copypasting edits between photos would be nice\n\n* Hiding categories of adjustments (the eye icon in Lightroom) for easier comparison\n\nOn another note, I just restarted RapidRAW and it stopped finding images in any of the folders.",
+      "author": "MrHaxx1",
+      "timestamp": "2025-06-30T16:52:33.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "* Copypasting edits between photos would be nice\n\nhahaha I literally added it everywhere possible. You can right click on the image, press copy Adjustments, you can copy the adjustments in the bottom bar, you can copy the adjustments using CTRL C and then paste it the same way like before (Right click, bottom bar, CTRL V). You can even batch paste it when you have multiple images selected, using CTRL or SHIFT\n\n* Hiding categories of adjustments (the eye icon in Lightroom) for easier comparison\n\nThat's a good idea. I will implement this in the near future. \n\nThank you!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T17:17:25.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Dang, my bad. I just kind of assumed it wasn't there. I couldn't check it, because it broke for me lol",
+      "author": "MrHaxx1",
+      "timestamp": "2025-06-30T17:29:54.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "No problem. Can you please tell me more about how it broke for you? Does it still not work when you change folder or delete the thumbnail cache in the settings? What PC do you have (SSD or HDD)? Thanks again",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T17:47:01.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Uh, you know, it turns out that it was actually pictures in some folders that were missing. Nothing wrong with your program. My bad again.",
+      "author": "MrHaxx1",
+      "timestamp": "2025-07-01T19:16:44.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 6,
+      "threadLevel": 6,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "All okay - thanks for the clarification!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T19:26:01.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 7,
+      "threadLevel": 7,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I haven't yet tested, I've been reading the whole thread, but the way the scrolling could work, it to have different behaviors depending on what the mouse pointer is hovering over.   \nFor example if its hovering over the slider, then the scrolling affects the slider and not the vertical scrolling of the list of adjustments.   \n\nMy guess is that to make it obvious, there would be a change of color or padding around the affected slider. Also maybe when you hover over the slider, the scrolling is activated after a second or two, keeping the vertical scrolling intuitive.   \n\nAnother thing is that maybe middle clicking the slider could reset it to default.",
+      "author": "royeiror",
+      "timestamp": "2025-06-30T17:17:06.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thanks for your feedback. I will consider this in future releases.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T17:20:40.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I just finished editing my latest shoot with this and first off, I really, really like what you've done here. I'm seriously ready to switch as I never really fell in love with darktable, that just feels really unwieldy and unintuitive at times. That said, I've noticed some things I'd like to see in future versions. Some of this will be bugs, others feature requests, but I feel like most of these should be fairly uncomplicated to implement, so in no particular order:\n\n-the Metadata panel could use some reordering, right now there's a lot of stuff I don't really care about before stuff I do(lens/exposure info, shooting mode etc.) Also, I'd love to have focal length, iso, aperture and shutter speed visible even outside that panel, maybe in the same line as the file name  \n-Space to zoom is acting a bit weird for me, I'd prefer if it centered on the cursor instead of the top left corner. There's also a bug where after dragging the view around hitting space again doesn't zoom out, but returns to the top left at 200% and then doesn't do anything until I change photos(it might also be worth a thought to make space return to 100% if the zoom level is anything else)  \n-I often need to decide between two pictures, and currently there's just a bit too long of a delay when flipping between them, is it possible to keep the last few photos in cache in full resolution/do some sort of side by side feature?  \n-I'd love to be able to filter by rating, e.g. show just 4 star images or don't show anything below 3 stars  \n-I really missed being able to toggle clipping indicators  \n-One thing I really like about darktable is that a double click will reset a slider, it's really helpful for A-B-ing just that one adjustment   \n-A couple times copying adjustments deleted the star rating on the copied to image. I haven't been able to reproduce this consistently, but it only affected copying to a single image, never to a batch  \n-the default crop ratio should be original or user selectable imo. 90% of cases I just want to punch in a bit, but keep the aspect ratio, and it's slightly annoying to have to click original every time  \n-when cropping portrait orientation shots, I can't zoom out far enough to drag the edges in, essentially making cropping impossible. Related to that, I'd prefer it if opening the crop panel didn't automatically zoom in  \n-Have you thought about having the rotate function automatically crop in to eliminate \"blank\" corners?  \n-I'd prefer the WB and exposure sliders to be in Kelvin/stops respectively instead of 0-100  \n-The vignette slider feels backwards to me, intuitively I'd expect dragging it right to darken the corners instead of lightening them  \n-I'd love to have a B/W conversion tool. Doesn't have to be fancy, just a thing that turns the photo B/W with control over individual RGB channels would be enough for me  \n-when exporting, the counter doesn't update for me \n\nHope this was at least somewhat understandable, if not, feel free to ask! I know it's quite a bit, but that's what I noticed when using it, so I figured I'd flag it :) Again, really impressed with what you've accomplished already, and I'm very eager to see what else you'll do with this!",
+      "author": "Affectionate_Spell11",
+      "timestamp": "2025-07-07T02:13:33.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Wow - thank you very much for this detailed feedback and I'm very happy that you enjoyed using RapidRAW.\n\nI will open a github issue with a link to this reddit post to better track your feedback. Do you have a github account / username, so I can add you to the issue?\n\nReference issue, which I just created: [Usability Improvements, Bugs, and Feature Requests from Reddit · Issue #26 · CyberTimon/RapidRAW](https://github.com/CyberTimon/RapidRAW/issues/26)\n\nThanks a lot!",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-07T19:58:31.000Z",
+      "links": [
+        "https://github.com/CyberTimon/RapidRAW/issues/26"
+      ],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "My pleasure!    \nI'm gratinator on GitHub",
+      "author": "Affectionate_Spell11",
+      "timestamp": "2025-07-07T22:07:25.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I implemented most of your wished features - checkout the github issue if you haven‘t done it already :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-08T20:15:06.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Yep, saw a couple of updates the last few days \\^\\^  \nAwesome work, looking forward to trying it out (and wouldn't you know it, I'll most likely have some new shots after the weekend)",
+      "author": "Affectionate_Spell11",
+      "timestamp": "2025-07-08T20:51:42.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Enjoy shooting 📸",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-09T10:21:44.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Just built on my Mac (suprisingly simple for a rookie) and it works great! It is indeed very fast. Something interesting happening when I try to crop, though, where it doesn't really crop but just kinda frames the image inside itself.. not really sure how to describe it more clearly. Perhaps there's something I'm missing?",
+      "author": "BusinessNo4491",
+      "timestamp": "2025-06-29T20:46:25.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Just check and seems to work properly when exported though :)",
+      "author": "BusinessNo4491",
+      "timestamp": "2025-06-29T20:55:22.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "SO much better than darktable.. thanks so much",
+      "author": "BusinessNo4491",
+      "timestamp": "2025-06-29T20:55:47.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thank you for your answer and for trying it out. Can you please try to explain the crop issue better so I can try to fix / improve it?",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-30T06:40:07.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "if you want insight into building something for culling photos, man please reach out to me and I will help us build something better than what lightroom currently offers and genuinely think if we get it right it would be a money making machine, cause I am TIRED of culling through thousands of photos after each gig just to send 50 photos\n\nbeen doing this for 10 years and have been thinking about ways to optimize it for years, and everything I find online to speed up the workflow is not better than my current technique, so I’m confident I’m on to something",
+      "author": "[deleted]",
+      "timestamp": "2025-06-30T05:37:27.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "An 18-year old built a full RAW editing app in two weeks using AI. I'm sure you could come up with a demo or prototype. If it's good, people will throw money at you and you'll be able to improve it.",
+      "author": "yes_that_redditor",
+      "timestamp": "2025-07-09T10:09:49.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Upvote for rust 🦀",
+      "author": "Ezelryb",
+      "timestamp": "2025-06-30T18:06:42.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "This is a great app and Idea.    There is a need for a more simplified yet powerful Lightroom clone with good ui...as much as I love Darktable it has a steep learning curve that can be hard for new users.    Will you add a Digital Asset Manager to the app like Lightroom has , so far most apps can't match that part of Lightroom.",
+      "author": "Nexis4Jersey",
+      "timestamp": "2025-07-01T12:54:31.000Z",
+      "links": [],
+      "score": 3,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Thanks a lot for your feedback. What feature do you like the most from Lightrooms Image Library / Asset Manager?",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T13:07:05.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "I like being able to see how many shots i've taken sorted by Date , lens type , focal length , iso...etc",
+      "author": "Nexis4Jersey",
+      "timestamp": "2025-07-01T13:09:10.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 2,
+      "threadLevel": 2,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Thats actually a great idea. Added on my todo list ☑️",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T14:08:44.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 3,
+      "threadLevel": 3,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Have you thought about using Darktables code for the raw?   When testing I found your app doesn't handle HDR very well.",
+      "author": "Nexis4Jersey",
+      "timestamp": "2025-07-01T14:23:46.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 4,
+      "threadLevel": 4,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "Directly using darktables code isnt something I plan to do. Regarding the HDR images, I havent tested HDR images yet so its normal that they arent working well. I try to improve it over the coming weeks.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-07-01T14:50:55.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 5,
+      "threadLevel": 5,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "&gt; I am immensely grateful for Google's Gemini suite of AI models.\n\nSo uh. Did you just copy + paste code from Gemini or...?",
+      "author": "xAtlas5",
+      "timestamp": "2025-06-29T17:53:46.000Z",
+      "links": [],
+      "score": 6,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Yes, I definitely relied on AI assistance, especially for parts of the code that involved complex or unclear concepts, as well as for handling repetitive tasks. That said, anyone with coding experience knows there's much more involved than simply copying and pasting code.",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:57:30.000Z",
+      "links": [],
+      "score": 12,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "awesome, gonna try it out 🤩",
+      "author": "JaguarImpossible2427",
+      "timestamp": "2025-06-29T17:04:24.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    },
+    {
+      "text": "Nice! Thanks :)",
+      "author": "zBlackVision11",
+      "timestamp": "2025-06-29T17:05:31.000Z",
+      "links": [],
+      "score": 1,
+      "depth": 1,
+      "threadLevel": 1,
+      "isReply": true,
+      "isTopLevel": false
+    },
+    {
+      "text": "This looks unbelievable for 2 weeks. \n\nDoes it have a texture slider hidden somewhere?",
+      "author": "Sinaaaa",
+      "timestamp": "2025-06-29T19:17:48.000Z",
+      "links": [],
+      "score": 2,
+      "depth": 0,
+      "threadLevel": 0,
+      "isReply": false,
+      "isTopLevel": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "fuji-fy-desktop-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Desktop bridge to run Fuji-Fy Python processing jobs.",
+  "scripts": {
+    "process-job": "node bridge/process-job-cli.mjs"
+  }
+}
+

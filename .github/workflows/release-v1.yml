@@ -1,0 +1,49 @@
+name: Fuji-Fy V1 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "desktop/**"
+      - "core/**"
+      - ".github/workflows/release-v1.yml"
+
+jobs:
+  build-desktop:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install root dependencies
+        run: npm install
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Build desktop package
+        run: npm run desktop:dist
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Expo app dependencies
+        run: |
+          cd apps/mobile
+          npm install
+      - name: Export Android artifact placeholder
+        run: |
+          cd apps/mobile
+          npx expo export --platform android
+

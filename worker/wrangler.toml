@@ -1,0 +1,13 @@
+name = "fujify-waitlist"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "WAITLIST"
+id = "c08f2108278b43a58561eb8509541d05"
+
+[vars]
+OWNER_EMAIL = "caokhang91@gmail.com"
+
+# Secrets (set via CLI — never put in this file):
+#   wrangler secret put RESEND_API_KEY

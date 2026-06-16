@@ -1,0 +1,15 @@
+# wrangler.toml — Fujify CDN Worker (serves the private R2 bucket)
+name = "fujify-cdn"
+main = "src/index.js"
+compatibility_date = "2026-06-05"
+workers_dev = true
+
+# Custom domain — app.js fetches https://cdn.fujify.app/content/<page>.md
+[[routes]]
+pattern = "cdn.fujify.app"
+custom_domain = true
+
+# Private R2 bucket (public access OFF). Worker is the only reader via env.BUCKET.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "fujify-production"

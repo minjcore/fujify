@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fuji-Fy Desktop</title>
+    <style>
+      body {
+        margin: 0;
+        background: #101010;
+        color: #f2f2f2;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .wrap {
+        padding: 24px;
+      }
+      button {
+        background: #3557ff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #1d1d1d;
+        border-radius: 8px;
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Fuji-Fy Desktop Wrapper</h1>
+      <p>Bridge to Python engine with offline processing.</p>
+      <button id="run">Run Demo Process Job</button>
+      <pre id="out">Idle</pre>
+    </div>
+    <script>
+      const out = document.getElementById("out");
+      document.getElementById("run").addEventListener("click", async () => {
+        try {
+          out.textContent = "Processing...";
+          const result = await window.fujify.processImage({
+            input_path: "/Users/khangdc/Desktop/Fuji-fy/DSC00038.JPG",
+            output_path: "/Users/khangdc/Desktop/Fuji-fy/DSC00038_desktop_app.jpg",
+            preset: "case01_flower_warm_fix",
+            compare: true
+          });
+          out.textContent = JSON.stringify(result, null, 2);
+        } catch (err) {
+          out.textContent = String(err);
+        }
+      });
+    </script>
+  </body>
+</html>
+

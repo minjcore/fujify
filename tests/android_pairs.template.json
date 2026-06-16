@@ -1,0 +1,16 @@
+{
+  "max_rmse": 0.03,
+  "pairs": [
+    {
+      "name": "case01_desktop_vs_android",
+      "reference": "DSC00038_case01.jpg",
+      "candidate": "DSC00038_android_case01.jpg"
+    },
+    {
+      "name": "case02_desktop_vs_android",
+      "reference": "DSC00043_case02.jpg",
+      "candidate": "DSC00043_android_case02.jpg"
+    }
+  ]
+}
+

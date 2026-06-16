@@ -1,0 +1,33 @@
+{
+  "name": "fuji-fy-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "dev": "electron .",
+    "dist": "electron-builder --mac --win"
+  },
+  "dependencies": {
+    "electron": "^34.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.fujify.desktop",
+    "productName": "Fuji-Fy",
+    "files": [
+      "main.mjs",
+      "preload.mjs",
+      "renderer/**"
+    ],
+    "mac": {
+      "target": ["dmg"]
+    },
+    "win": {
+      "target": ["nsis"]
+    }
+  }
+}
+

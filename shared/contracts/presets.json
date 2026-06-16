@@ -1,0 +1,55 @@
+{
+  "case01_flower_warm_fix": {
+    "temp": 5100,
+    "tint": 3,
+    "wb_shift_a": 0,
+    "wb_shift_b": 8,
+    "wb_shift_g": 0,
+    "wb_shift_m": 0,
+    "wb_auto": false,
+    "brightness": 0,
+    "contrast": 0.12,
+    "shadows": 0.08,
+    "highlights": -0.1
+  },
+  "nex5n_auto_keep_vibe": {
+    "temp": 5200,
+    "tint": 1,
+    "wb_shift_a": 0,
+    "wb_shift_b": 4,
+    "wb_shift_g": 0,
+    "wb_shift_m": 0,
+    "wb_auto": false,
+    "brightness": 0,
+    "contrast": 0.06,
+    "shadows": 0.03,
+    "highlights": -0.05
+  },
+  "case02_indoor_neon_neutral": {
+    "temp": 5600,
+    "tint": 2,
+    "wb_shift_a": 0,
+    "wb_shift_b": -2,
+    "wb_shift_g": 0,
+    "wb_shift_m": 0,
+    "wb_auto": false,
+    "brightness": -0.01,
+    "contrast": 0.05,
+    "shadows": 0.02,
+    "highlights": -0.12
+  },
+  "default_indoor": {
+    "temp": 5600,
+    "tint": 2,
+    "wb_shift_a": 0,
+    "wb_shift_b": -2,
+    "wb_shift_g": 0,
+    "wb_shift_m": 0,
+    "wb_auto": false,
+    "brightness": -0.01,
+    "contrast": 0.05,
+    "shadows": 0.02,
+    "highlights": -0.12
+  }
+}
+

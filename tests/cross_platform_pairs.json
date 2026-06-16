@@ -1,0 +1,16 @@
+{
+  "max_rmse": 0.01,
+  "pairs": [
+    {
+      "name": "case01_cli_vs_desktop_bridge",
+      "reference": "DSC00038_case01.jpg",
+      "candidate": "DSC00038_desktop_bridge.jpg"
+    },
+    {
+      "name": "case02_cli_vs_api",
+      "reference": "DSC00043_case02.jpg",
+      "candidate": "DSC00043_api_check.jpg"
+    }
+  ]
+}
+

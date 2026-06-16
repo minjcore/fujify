@@ -1,0 +1,44 @@
+# OS
+.DS_Store
+
+# Node
+node_modules/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# C++ build artifacts (imgui-poc)
+imgui-poc/*.o
+imgui-poc/imgui_poc
+imgui-poc/fujify
+imgui-poc/fujify_vk
+imgui-poc/dist/
+imgui-poc/engine-dist/
+imgui-poc/creative_*.jpg
+
+# Vendored Dear ImGui — clone per imgui-poc/README.md:
+#   git clone --depth 1 https://github.com/ocornut/imgui imgui-poc/imgui
+imgui-poc/imgui/
+
+# Large / downloaded assets (sample RAW from raw.pixls.us)
+imgui-poc/sample.ARW
+
+# Distributable binaries
+web/download/*.dmg
+
+# Cloudflare wrangler
+.wrangler/
+web/worker/.wrangler/
+
+# IDE
+.idea/
+.claude/settings.local.json
+
+# Third-party project clones (each has its own .git — keep out of this repo)
+RapidRAW/
+PixPic/
+photo-editor/

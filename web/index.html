@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fujify — Edit. Share. Keep.</title>
+  <meta name="description" content="Edit your RAW & JPEG photos, share at real quality, and never lose an original." />
+  <meta property="og:title" content="Fujify" />
+  <meta property="og:description" content="Edit. Share. Keep." />
+  <meta property="og:image" content="https://fujify.app/og.jpg" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black:#0a0a0a; --off-black:#111; --surface:#181818; --border:#2a2a2a;
+      --muted:#666; --text:#e8e0d4; --text-dim:#a09890; --gold:#c8a96e;
+      --gold-light:#dbbf85; --serif:'Georgia','Times New Roman',serif;
+      --sans:system-ui,-apple-system,'Helvetica Neue',sans-serif; --mono:'SF Mono','Fira Code',monospace;
+    }
+    html { scroll-behavior:smooth; }
+    body { background:var(--black); color:var(--text); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:1000; pointer-events:none; opacity:0.35;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+    .container { max-width:760px; margin:0 auto; padding:0 24px; }
+
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:20px 0; border-bottom:1px solid transparent; transition:border-color .3s, background .3s; }
+    nav.scrolled { background:rgba(10,10,10,.92); backdrop-filter:blur(12px); border-color:var(--border); }
+    nav .container { max-width:1080px; display:flex; align-items:center; justify-content:space-between; }
+    .logo { font-family:var(--serif); font-size:1.25rem; color:var(--gold); letter-spacing:.06em; text-decoration:none; }
+    .logo span { color:var(--text-dim); font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; margin-left:8px; }
+    .nav-cta { background:var(--gold); color:var(--black); padding:8px 20px; border-radius:4px; font-size:.8rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; text-decoration:none; transition:background .2s; }
+    .nav-cta:hover { background:var(--gold-light); }
+
+    /* ─── Markdown content ─── */
+    main { padding:140px 0 100px; min-height:100svh; }
+    .loading { color:var(--muted); font-family:var(--mono); font-size:.85rem; }
+    #content h1 { font-family:var(--serif); font-weight:400; font-size:clamp(2.6rem,7vw,4.6rem); line-height:1.08; margin:8px 0 28px; }
+    #content h2 { font-family:var(--serif); font-weight:400; font-size:clamp(1.7rem,3.5vw,2.4rem); margin:64px 0 20px; padding-top:32px; border-top:1px solid var(--border); }
+    #content h3 { font-family:var(--serif); font-weight:400; font-size:1.4rem; color:var(--text); margin:28px 0 8px; }
+    #content h1 em, #content h2 em, #content blockquote em { color:var(--gold); font-style:italic; }
+    #content p { color:var(--text-dim); margin:0 0 18px; max-width:62ch; }
+    #content a { color:var(--gold); text-decoration:none; border-bottom:1px solid rgba(200,169,110,.35); }
+    #content a:hover { border-bottom-color:var(--gold); }
+    #content ul, #content ol { color:var(--text-dim); margin:0 0 20px; padding-left:22px; }
+    #content li { margin:6px 0; }
+    #content strong { color:var(--text); }
+    #content code { font-family:var(--mono); font-size:.85em; background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:1px 6px; color:var(--gold-light); }
+    #content pre { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px; overflow:auto; margin:0 0 20px; }
+    #content pre code { background:none; border:none; padding:0; color:var(--text-dim); }
+    #content hr { border:none; border-top:1px solid var(--border); margin:8px 0; }
+    #content blockquote { font-family:var(--serif); font-style:italic; font-size:1.3rem; line-height:1.5; color:var(--text); border-left:2px solid var(--gold); padding:4px 0 4px 24px; margin:0 0 20px; }
+    #content blockquote p { color:var(--text); }
+    /* download links render as buttons */
+    #content a[href$=".dmg"] {
+      display:inline-block; background:var(--gold); color:var(--black); font-weight:700;
+      letter-spacing:.04em; padding:13px 26px; border-radius:4px; border:none; margin:6px 0 4px;
+      text-decoration:none; transition:background .2s;
+    }
+    #content a[href$=".dmg"]:hover { background:var(--gold-light); }
+
+    footer { border-top:1px solid var(--border); padding:40px 0; }
+    footer .container { max-width:1080px; display:flex; align-items:center; justify-content:space-between; }
+    footer .logo { font-size:1rem; }
+    .footer-note { font-size:.78rem; color:var(--muted); }
+    .footer-links a { font-size:.78rem; color:var(--muted); text-decoration:none; }
+    .footer-links a:hover { color:var(--text); }
+
+    @media (max-width:768px) {
+      footer .container { flex-direction:column; gap:20px; text-align:center; }
+      .nav-cta { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="container">
+    <a class="logo" href="#/home">Fujify<span>beta</span></a>
+    <a class="nav-cta" href="https://cdn.fujify.app/download/Fuji-fy-Studio-macOS.dmg">Download</a>
+  </div>
+</nav>
+
+<!-- Content is loaded from Markdown (R2 → fallback ./content) by app.js -->
+<main>
+  <div class="container" id="content"><p class="loading">Loading…</p></div>
+</main>
+
+<footer>
+  <div class="container">
+    <a class="logo" href="#/home">Fujify</a>
+    <p class="footer-note">fujify.app · built for photographers</p>
+    <div class="footer-links"><a href="mailto:hi@fujify.app">Contact</a></div>
+  </div>
+</footer>
+
+<script>
+  var nav = document.getElementById('nav');
+  window.addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+</script>
+<script src="app.js"></script>
+
+</body>
+</html>

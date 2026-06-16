@@ -1,0 +1,17 @@
+{
+  "name": "fuji-fy",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/mobile",
+    "apps/desktop"
+  ],
+  "scripts": {
+    "mobile:start": "npm --workspace apps/mobile run start",
+    "mobile:android": "npm --workspace apps/mobile run android",
+    "desktop:dev": "npm --workspace apps/desktop run dev",
+    "desktop:dist": "npm --workspace apps/desktop run dist",
+    "server:dev": "uvicorn apps.server.main:app --reload --host 0.0.0.0 --port 8000"
+  }
+}
+

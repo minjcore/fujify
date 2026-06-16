@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fuji-fy.app/schemas/processing.schema.json",
+  "title": "Fuji-Fy ProcessImageRequest",
+  "type": "object",
+  "required": ["input_path"],
+  "properties": {
+    "input_path": { "type": "string", "minLength": 1 },
+    "output_path": { "type": "string" },
+    "compare": { "type": "boolean", "default": false },
+    "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 95 },
+    "preset": { "type": ["string", "null"] },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "temp": { "type": ["number", "null"] },
+        "tint": { "type": "number" },
+        "wb_shift_a": { "type": "number" },
+        "wb_shift_b": { "type": "number" },
+        "wb_shift_g": { "type": "number" },
+        "wb_shift_m": { "type": "number" },
+        "wb_auto": { "type": "boolean" },
+        "brightness": { "type": "number" },
+        "contrast": { "type": "number" },
+        "shadows": { "type": "number" },
+        "highlights": { "type": "number" },
+        "wb_pick": {
+          "type": ["array", "null"],
+          "items": [{ "type": "integer" }, { "type": "integer" }],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "wb_pick_radius": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+

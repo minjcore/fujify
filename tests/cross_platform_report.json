@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "max_rmse": 0.01,
+  "pairs": [
+    {
+      "name": "case01_cli_vs_desktop_bridge",
+      "ref_path": "/Users/khangdc/Desktop/Fuji-fy/DSC00038_case01.jpg",
+      "candidate_path": "/Users/khangdc/Desktop/Fuji-fy/DSC00038_desktop_bridge.jpg",
+      "rmse": 0.0,
+      "mean_abs_diff": 0.0,
+      "channel_shift": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pass_threshold": true
+    },
+    {
+      "name": "case02_cli_vs_api",
+      "ref_path": "/Users/khangdc/Desktop/Fuji-fy/DSC00043_case02.jpg",
+      "candidate_path": "/Users/khangdc/Desktop/Fuji-fy/DSC00043_api_check.jpg",
+      "rmse": 0.0,
+      "mean_abs_diff": 0.0,
+      "channel_shift": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pass_threshold": true
+    }
+  ],
+  "failed": []
+}
