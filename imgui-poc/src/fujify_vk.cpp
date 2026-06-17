@@ -15,7 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "fujify_engine.h"   // StudioUI + engine/daemon/proxy/worker/fonts
+#include "fujify_ui.h"   // StudioUI + jobs + engine (split headers)
 
 #ifndef MOLTENVK_ICD
 #define MOLTENVK_ICD "/opt/homebrew/etc/vulkan/icd.d/MoltenVK_icd.json"

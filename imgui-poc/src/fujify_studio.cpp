@@ -11,7 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "fujify_engine.h"   // StudioUI + engine/daemon/proxy/worker/fonts
+#include "fujify_ui.h"   // StudioUI + jobs + engine (split headers)
 
 // ---- OpenGL texture -----------------------------------------------------
 struct GLTexture { GLuint id = 0; int w = 0, h = 0; };

@@ -38,7 +38,7 @@ VKLIBS     = -L$(VK_LOADER)/lib -lvulkan -Wl,-rpath,$(VK_LOADER)/lib
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # Rebuild app objects when the shared header changes (pattern rule omits this prereq).
-fujify_studio.o: src/fujify_studio.cpp src/fujify_engine.h
+fujify_studio.o: src/fujify_studio.cpp src/fujify_engine.h src/fujify_jobs.h src/fujify_ui.h
 
 # Core Dear ImGui objects (backend-agnostic) + GLFW platform backend
 IMGUI_CORE = imgui.o imgui_draw.o imgui_tables.o imgui_widgets.o imgui_demo.o imgui_impl_glfw.o
@@ -56,7 +56,7 @@ fujify: fujify_studio.o $(IMGUI_OBJS)
 	@echo "Build complete -> ./fujify"
 
 # Fuji-fy Studio — Vulkan backend (needs Vulkan headers for these two TUs)
-fujify_vk.o: src/fujify_vk.cpp src/fujify_engine.h
+fujify_vk.o: src/fujify_vk.cpp src/fujify_engine.h src/fujify_jobs.h src/fujify_ui.h
 	$(CXX) $(CXXFLAGS) $(VKFLAGS) -c -o $@ src/fujify_vk.cpp
 imgui_impl_vulkan.o: $(IMGUI_DIR)/backends/imgui_impl_vulkan.cpp
 	$(CXX) $(CXXFLAGS) $(VKFLAGS) -c -o $@ $<
