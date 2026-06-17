@@ -437,6 +437,7 @@ struct StudioUI {
     float pt = 5200.f, pti = 0.f, pb = 0.15f, pc = 0.10f, ps = 0.f, ph = 0.f;
     // export
     int   ex_fmt_idx = 0, ex_tier_idx = 0; bool ex_brand = true;
+    bool  show_export = false;   // tạm ẩn panel Export
     std::string ex_status, status;
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
@@ -624,26 +625,28 @@ struct StudioUI {
         ImGui::Separator();
         ImGui::TextWrapped("%s", status.c_str());
 
-        bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy
-        if (is_video(input_path)) {
-            ImGui::SeparatorText(u8"Export video 動画");
-            ImGui::TextDisabled("Ap look (temp/brightness/contrast) qua ffmpeg → .mp4");
-            ImGui::BeginDisabled(!can_export);
-            if (ImGui::Button("Export video (.mp4)", ImVec2(-1, 30))) start_export(false);
-            ImGui::EndDisabled();
-        } else {
-            ImGui::SeparatorText(u8"Export creative 書き出し (IG / Threads)");
-            ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
-            ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
-            ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
-            ImGui::TextDisabled("story 9:16 - feed 4:5 - square 1:1 | hq=2560px ig=2048px");
-            ImGui::BeginDisabled(!can_export);
-            if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
-            if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
-            ImGui::EndDisabled();
+        if (show_export) {   // tạm ẩn nút export (đặt show_export=true để bật lại)
+            bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy
+            if (is_video(input_path)) {
+                ImGui::SeparatorText(u8"Export video 動画");
+                ImGui::TextDisabled("Ap look (temp/brightness/contrast) qua ffmpeg → .mp4");
+                ImGui::BeginDisabled(!can_export);
+                if (ImGui::Button("Export video (.mp4)", ImVec2(-1, 30))) start_export(false);
+                ImGui::EndDisabled();
+            } else {
+                ImGui::SeparatorText(u8"Export creative 書き出し (IG / Threads)");
+                ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
+                ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
+                ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
+                ImGui::TextDisabled("story 9:16 - feed 4:5 - square 1:1 | hq=2560px ig=2048px");
+                ImGui::BeginDisabled(!can_export);
+                if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
+                if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
+                ImGui::EndDisabled();
+            }
+            if (!has_tex) ImGui::TextDisabled("(Load anh/video truoc khi export)");
+            if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
         }
-        if (!has_tex) ImGui::TextDisabled("(Load anh/video truoc khi export)");
-        if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
         ImGui::End();
 
         // ---- Preview (zoom/pan) ----
