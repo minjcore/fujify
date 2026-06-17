@@ -108,6 +108,7 @@ struct StudioUI {
     Histogram hist;   // RGB histogram of the current preview
     std::vector<std::string> recents;   // recently opened images (persisted)
     std::vector<EditState> snaps;       // saved looks (in-memory, this session)
+    std::vector<std::string> lib_names, lib_keys;   // cloud library listing
     // engine
     Daemon daemon;
     std::unique_ptr<JobSystem> js;
@@ -169,6 +170,16 @@ struct StudioUI {
         Task t = make_task(Task::Upload);
         t.token = cloud_token;
         js->submit(t);
+    }
+    void start_lib_list() { Task t; t.kind = Task::LibList; t.token = cloud_token; js->submit(t); }
+    void start_lib_get(const std::string& key) { Task t; t.kind = Task::LibGet; t.lib_key = key; js->submit(t); }
+
+    static std::vector<std::string> split_pipe(const std::string& s) {
+        std::vector<std::string> v; size_t a = 0;
+        if (s.empty()) return v;
+        for (size_t b; (b = s.find('|', a)) != std::string::npos; a = b + 1) v.push_back(s.substr(a, b - a));
+        v.push_back(s.substr(a));
+        return v;
     }
     void start_auth(bool signup) {
         Task t; t.kind = Task::Auth; t.signup = signup;
@@ -400,8 +411,15 @@ struct StudioUI {
             ImGui::SameLine();
             if (ImGui::SmallButton("Logout")) { cloud_token.clear(); cloud_email.clear(); save_session(); }
             ImGui::BeginDisabled(!has_tex || is_video(input_path));
-            if (ImGui::Button("Upload to cloud", ImVec2(-1, 0))) start_upload();
+            if (ImGui::Button("Upload to cloud", ImVec2(-90, 0))) start_upload();
             ImGui::EndDisabled();
+            ImGui::SameLine();
+            if (ImGui::Button("Library", ImVec2(-1, 0))) start_lib_list();
+            for (size_t i = 0; i < lib_names.size(); i++) {
+                ImGui::PushID((int)(1000 + i));
+                if (ImGui::Selectable(lib_names[i].c_str())) start_lib_get(lib_keys[i]);
+                ImGui::PopID();
+            }
         }
 
         if (live && dirty && (ImGui::GetTime() - last_change) > 0.35) { start_process(); dirty = false; }
@@ -459,7 +477,17 @@ struct StudioUI {
         while (js->poll(r)) {
             if (r.kind == Task::Auth) {
                 status = r.log;
-                if (r.ok) { cloud_token = r.token; cloud_email = r.email; acct_pw[0] = 0; save_session(); }
+                if (r.ok) { cloud_token = r.token; cloud_email = r.email; acct_pw[0] = 0; save_session();
+                            start_lib_list(); }
+            } else if (r.kind == Task::LibList) {
+                status = r.log;
+                if (r.ok) { lib_names = split_pipe(r.names); lib_keys = split_pipe(r.keys); }
+            } else if (r.kind == Task::LibGet) {
+                status = r.log;
+                if (r.ok && !r.path.empty()) {
+                    std::snprintf(input_path, sizeof(input_path), "%s", r.path.c_str());
+                    start_process();   // open the downloaded image
+                }
             } else if (r.kind == Task::Export) ex_status = r.log;
             else { status = r.log; if (r.reload_texture && r.ok) { need_upload = true; preview_log = r.log; } }
         }

@@ -306,6 +306,44 @@ def _auth(mode: str, req: dict) -> dict:
             "token": data.get("token", ""), "email": data.get("email", email)}
 
 
+def _library_list(req: dict) -> dict:
+    """List the signed-in user's cloud library (GET /library + token)."""
+    t0 = perf_counter()
+    token = req.get("token") or os.environ.get("FUJIFY_UPLOAD_TOKEN")
+    if not token:
+        raise PreviewError(ERR_BAD_REQUEST, "not logged in (no token)")
+    rq = urllib.request.Request(_WORKER + "/library", method="GET",
+        headers={"Authorization": "Bearer " + token, "User-Agent": "fujify-studio/0.1"})
+    try:
+        with urllib.request.urlopen(rq, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as exc:  # noqa: BLE001
+        raise PreviewError(ERR_SAVE_FAILED, f"list: {exc}") from exc
+    items = data.get("items", [])
+    return {"ok": True, "mode": "library_list", "ms": int((perf_counter() - t0) * 1000),
+            "names": "|".join(i["name"] for i in items),
+            "keys": "|".join(i["key"] for i in items), "count": len(items)}
+
+
+def _library_get(req: dict) -> dict:
+    """Download a library object (by full key) to output_path."""
+    t0 = perf_counter()
+    key = req.get("key", "")
+    if not key or not req.get("output_path"):
+        raise PreviewError(ERR_BAD_REQUEST, "key & output_path required")
+    out = Path(req["output_path"]).expanduser().resolve()
+    rq = urllib.request.Request(_WORKER + "/" + key, method="GET",
+        headers={"User-Agent": "fujify-studio/0.1"})
+    try:
+        with urllib.request.urlopen(rq, timeout=120) as resp:
+            data = resp.read()
+    except Exception as exc:  # noqa: BLE001
+        raise PreviewError(ERR_SAVE_FAILED, f"download: {exc}") from exc
+    out.write_bytes(data)
+    return {"ok": True, "mode": "library_get", "ms": int((perf_counter() - t0) * 1000),
+            "output_path": str(out), "kb": round(len(data) / 1024)}
+
+
 def _upload(req: dict) -> dict:
     """PUT a local file to the cloud (Worker → private R2) under the user's library/."""
     t0 = perf_counter()
@@ -334,10 +372,14 @@ def _handle(req: dict) -> dict:
     t0 = perf_counter()
     mode = req.get("mode", "preview")
     if mode not in ("preview", "full", "social", "video_export", "save_target", "upload",
-                    "auth_login", "auth_signup"):
+                    "auth_login", "auth_signup", "library_list", "library_get"):
         raise PreviewError(ERR_BAD_REQUEST, f"unknown mode '{mode}'")
     if mode in ("auth_login", "auth_signup"):
         return _auth(mode, req)
+    if mode == "library_list":
+        return _library_list(req)
+    if mode == "library_get":
+        return _library_get(req)
     if mode == "upload":
         return _upload(req)
     if not req.get("output_path"):

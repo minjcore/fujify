@@ -8,21 +8,24 @@
 // coalesced by sequence number so dragging sliders never backs up a stale queue.
 
 struct Task {
-    enum Kind { Preview, Export, SaveTarget, Upload, Auth } kind = Preview;
+    enum Kind { Preview, Export, SaveTarget, Upload, Auth, LibList, LibGet } kind = Preview;
     std::string input;
     bool  use_temp = false, wb_auto = false;
     float temp = 0, tint = 0, br = 0, co = 0, sh = 0, hi = 0;
     int   preset = 0;
     bool  all = false; int fmt_idx = 0, tier_idx = 0; bool brand = true;  // export-only
     int   target_kb = 500;                                                // save-target-only
-    std::string token;                                                    // upload-only
+    std::string token;                                                    // upload/library
     std::string email, password; bool signup = false;                     // auth-only
+    std::string lib_key;                                                  // library_get-only
     uint64_t seq = 0;                                                     // preview coalescing
 };
 
 struct Result {
     Task::Kind kind = Task::Preview;
     std::string token, email;   // auth-only: set on successful login/signup
+    std::string names, keys;    // library_list: '|'-joined
+    std::string path;           // library_get: local file downloaded
     bool ok = false, reload_texture = false;
     int  ms = 0;
     std::string log;
@@ -101,6 +104,19 @@ private:
                 r.email = json_str_field(er.log.c_str(), "email");
                 r.log = "Logged in: " + r.email;
             } else r.log = "Auth: " + er.log;
+        } else if (t.kind == Task::LibList) {           // list user's cloud library
+            EngineResult er = engine_run(*dmn, build_liblist_json(t.token));
+            r.ok = er.ok;
+            if (er.ok) { r.names = json_str_field(er.log.c_str(), "names");
+                         r.keys = json_str_field(er.log.c_str(), "keys"); r.log = "Library loaded"; }
+            else r.log = "Library: " + er.log;
+        } else if (t.kind == Task::LibGet) {            // download one library file
+            std::string base = path_stem(t.lib_key);
+            std::string out = std::string("/tmp/fuji_lib_") + base + ".jpg";
+            EngineResult er = engine_run(*dmn, build_libget_json(t.lib_key, out));
+            r.ok = er.ok;
+            r.path = er.ok ? out : "";
+            r.log = er.ok ? ("Downloaded " + base) : ("Download: " + er.log);
         } else if (is_video(t.input)) {                 // video → ffmpeg look export
             std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
             EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,

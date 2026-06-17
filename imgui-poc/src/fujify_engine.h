@@ -181,6 +181,19 @@ static inline std::string build_upload_json(const std::string& src, const std::s
     return buf;
 }
 
+// Cloud library: list the user's files / download one by key.
+static inline std::string build_liblist_json(const std::string& token) {
+    char buf[2048];
+    std::snprintf(buf, sizeof(buf), "{\"mode\":\"library_list\",\"token\":\"%s\"}", token.c_str());
+    return buf;
+}
+static inline std::string build_libget_json(const std::string& key, const std::string& out) {
+    char buf[2048];
+    std::snprintf(buf, sizeof(buf),
+        "{\"mode\":\"library_get\",\"key\":\"%s\",\"output_path\":\"%s\"}", key.c_str(), out.c_str());
+    return buf;
+}
+
 // Account signup/login request (engine POSTs to the Worker /auth/*).
 static inline std::string build_auth_json(const char* mode, const std::string& email,
                                           const std::string& pw) {

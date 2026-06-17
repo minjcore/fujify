@@ -134,6 +134,16 @@ export default {
       return new Response("Method Not Allowed", { status: 405, headers: CORS });
     }
 
+    // --- list the signed-in user's library: GET /library (Bearer login token) ---
+    if (request.method === "GET" && (key === "library" || key === "library/")) {
+      const email = await verifyToken(env, (request.headers.get("Authorization") || "").replace(/^Bearer\s+/, ""));
+      if (!email) return new Response("Unauthorized", { status: 401, headers: CORS });
+      const prefix = "library/" + userKey(email) + "/";
+      const listed = await env.BUCKET.list({ prefix, limit: 1000 });
+      const items = listed.objects.map((o) => ({ key: o.key, name: o.key.slice(prefix.length), size: o.size }));
+      return jsonRes({ ok: true, items });
+    }
+
     if (key === "" || key === "index.html") {
       return new Response("Fujify CDN — ok\n", {
         headers: { ...CORS, "Content-Type": "text/plain" },
