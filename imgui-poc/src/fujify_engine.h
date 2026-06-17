@@ -102,15 +102,17 @@ static inline void stop_daemon(Daemon& d) {
 // same payload works for the fallback path (which always processes full-res).
 static inline std::string build_json(const char* mode, const std::string& in, const char* out, int max_dim,
                                      bool use_temp, float temp, float tint, bool wb_auto,
-                                     float br, float co, float sh, float hi, const char* preset) {
-    std::string presetField;
-    if (preset && preset[0]) presetField = std::string("\"preset\":\"") + preset + "\",";
+                                     float br, float co, float sh, float hi, const char* preset,
+                                     int target_kb = 0) {
+    std::string extra;
+    if (preset && preset[0]) extra += std::string("\"preset\":\"") + preset + "\",";
+    if (target_kb > 0) extra += "\"target_kb\":" + std::to_string(target_kb) + ",";
     char buf[2048];
     std::snprintf(buf, sizeof(buf),
         "{\"mode\":\"%s\",\"input_path\":\"%s\",\"output_path\":\"%s\",\"max_dim\":%d,\"quality\":90,%s"
         "\"settings\":{\"temp\":%s,\"tint\":%.3f,\"wb_auto\":%s,\"brightness\":%.3f,"
         "\"contrast\":%.3f,\"shadows\":%.3f,\"highlights\":%.3f}}",
-        mode, in.c_str(), out, max_dim, presetField.c_str(),
+        mode, in.c_str(), out, max_dim, extra.c_str(),
         use_temp ? std::to_string((int)temp).c_str() : "null",
         tint, wb_auto ? "true" : "false", br, co, sh, hi);
     return buf;
@@ -273,12 +275,13 @@ static const char* kTiers[]      = {"hq", "ig"};                  // 2560px / 20
 // coalesced by sequence number so dragging sliders never backs up a stale queue.
 
 struct Task {
-    enum Kind { Preview, Export } kind = Preview;
+    enum Kind { Preview, Export, SaveTarget } kind = Preview;
     std::string input;
     bool  use_temp = false, wb_auto = false;
     float temp = 0, tint = 0, br = 0, co = 0, sh = 0, hi = 0;
     int   preset = 0;
     bool  all = false; int fmt_idx = 0, tier_idx = 0; bool brand = true;  // export-only
+    int   target_kb = 500;                                                // save-target-only
     uint64_t seq = 0;                                                     // preview coalescing
 };
 
@@ -336,6 +339,13 @@ private:
             r.ok = er.ok; r.ms = er.elapsed_ms; r.reload_texture = er.ok;
             r.log = er.ok ? ("OK — engine " + std::to_string(er.elapsed_ms) + " ms (proxy)")
                           : ("Loi engine:\n" + er.log);
+        } else if (t.kind == Task::SaveTarget) {        // save full-res at ~target KB
+            std::string out = path_dir(t.input) + "/" + path_stem(t.input) +
+                              "_" + std::to_string(t.target_kb) + "kb.jpg";
+            EngineResult er = engine_run(*dmn, build_json("save_target", t.input, out.c_str(), 0,
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], t.target_kb));
+            r.ok = er.ok;
+            r.log = er.ok ? ("Saved → " + out + "\n" + er.log) : ("Loi save:\n" + er.log);
         } else if (is_video(t.input)) {                 // video → ffmpeg look export
             std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
             EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,
@@ -445,6 +455,7 @@ struct StudioUI {
     // export
     int   ex_fmt_idx = 0, ex_tier_idx = 0; bool ex_brand = true;
     bool  show_export = false;   // tạm ẩn panel Export
+    int   target_kb = 500;       // save-to-target-size
     std::string ex_status, status;
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
@@ -501,6 +512,12 @@ struct StudioUI {
         pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
         start_process(); dirty = false;
     }
+    void start_save_target() {
+        Task t = make_task(Task::SaveTarget);
+        t.target_kb = target_kb;
+        js->submit(t);
+    }
+
     void start_export(bool all) {
         Task t = make_task(Task::Export);
         t.all = all; t.fmt_idx = ex_fmt_idx; t.tier_idx = ex_tier_idx; t.brand = ex_brand;
@@ -673,6 +690,15 @@ struct StudioUI {
         }
         ImGui::Separator();
         ImGui::TextWrapped("%s", status.c_str());
+
+        ImGui::SeparatorText(u8"Save → target dung lượng");
+        ImGui::SetNextItemWidth(110); ImGui::InputInt("KB", &target_kb);
+        if (target_kb < 10) target_kb = 10;
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!has_tex || is_video(input_path));
+        if (ImGui::Button("Save ~KB", ImVec2(-1, 0))) start_save_target();
+        ImGui::EndDisabled();
+        if (is_video(input_path)) ImGui::TextDisabled("(target-size cho ảnh; video dùng Export video)");
 
         if (show_export) {   // tạm ẩn nút export (đặt show_export=true để bật lại)
             bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy

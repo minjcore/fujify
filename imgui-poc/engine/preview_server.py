@@ -13,6 +13,7 @@ Reuses core/ so color science stays identical to the CLI/server path.
 """
 from __future__ import annotations
 
+import io
 import json
 import os
 import shutil
@@ -225,16 +226,66 @@ def _load_rgb(mode: str, req: dict):
         raise PreviewError(ERR_DECODE_FAILED, f"{type(exc).__name__}: {exc}") from exc
 
 
+def _save_target(req: dict) -> dict:
+    """Save the processed full-res image at ~target_kb: binary-search JPEG quality, then
+    shrink if even low quality overshoots. Keeps 4:4:4 (subsampling=0)."""
+    t0 = perf_counter()
+    out = Path(req["output_path"]).expanduser().resolve()
+    target = max(10, int(req.get("target_kb", 500))) * 1024
+    wb, tone = _wb_tone(req)
+    rgb, exif = _load_rgb("full", req)
+    processed = np.clip(apply_tone(apply_white_balance(rgb, wb), tone), 0.0, 1.0)
+    base = Image.fromarray((processed * 255.0).astype(np.uint8))
+    exif_b = exif if isinstance(exif, (bytes, bytearray)) else None
+
+    def encode(im, q):
+        buf = io.BytesIO()
+        kw = {"quality": int(q), "subsampling": 0, "optimize": True}
+        if exif_b:
+            kw["exif"] = exif_b
+        im.save(buf, "JPEG", **kw)
+        return buf.getvalue()
+
+    best, scale = None, 1.0
+    for _ in range(5):                       # shrink if min quality still overshoots
+        im = base if scale == 1.0 else base.resize(
+            (max(1, int(base.width * scale)), max(1, int(base.height * scale))), Image.LANCZOS)
+        lo, hi, cand = 30, 95, None
+        for _ in range(7):                   # binary-search quality
+            q = (lo + hi) // 2
+            data = encode(im, q)
+            if len(data) <= target:
+                cand, lo = (q, data), q + 1
+            else:
+                hi = q - 1
+        if cand is not None:
+            best = cand; break
+        data = encode(im, 30)
+        if len(data) <= target or scale < 0.35:
+            best = (30, data); break
+        scale *= 0.8
+
+    q, data = best
+    try:
+        out.write_bytes(data)
+    except Exception as exc:  # noqa: BLE001
+        raise PreviewError(ERR_SAVE_FAILED, f"{type(exc).__name__}: {exc}") from exc
+    return {"ok": True, "ms": int((perf_counter() - t0) * 1000), "mode": "save_target",
+            "bytes": len(data), "kb": round(len(data) / 1024), "quality": q}
+
+
 def _handle(req: dict) -> dict:
     t0 = perf_counter()
     mode = req.get("mode", "preview")
-    if mode not in ("preview", "full", "social", "video_export"):
+    if mode not in ("preview", "full", "social", "video_export", "save_target"):
         raise PreviewError(ERR_BAD_REQUEST, f"unknown mode '{mode}'")
     if not req.get("output_path"):
         raise PreviewError(ERR_BAD_REQUEST, "missing 'output_path'")
 
     if mode == "video_export":
         return _video_export(req)
+    if mode == "save_target":
+        return _save_target(req)
 
     # Social export: render a share-ready crop from an already-processed full-res JPEG.
     if mode == "social":
