@@ -244,6 +244,16 @@ static inline std::string path_dir(const std::string& p) {
     auto s = p.find_last_of('/');
     return s == std::string::npos ? "." : p.substr(0, s);
 }
+static inline std::string human_size(const std::string& p) {
+    FILE* f = std::fopen(p.c_str(), "rb");
+    if (!f) return "?";
+    std::fseek(f, 0, SEEK_END); long n = std::ftell(f); std::fclose(f);
+    char buf[32];
+    if (n < 1024) std::snprintf(buf, sizeof(buf), "%ld B", n);
+    else if (n < 1024 * 1024) std::snprintf(buf, sizeof(buf), "%.0f KB", n / 1024.0);
+    else std::snprintf(buf, sizeof(buf), "%.1f MB", n / (1024.0 * 1024.0));
+    return buf;
+}
 static inline std::string path_stem(const std::string& p) {
     auto s = p.find_last_of('/');
     std::string b = (s == std::string::npos) ? p : p.substr(s + 1);

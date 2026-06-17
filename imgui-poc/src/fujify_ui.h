@@ -107,6 +107,7 @@ struct StudioUI {
     std::vector<std::string> pick_paths;                                   // chooser result
     std::vector<std::string> grid_files;                                   // ≥2 → contact-sheet preview
     std::vector<std::string> grid_back;                                    // grid to restore on Esc
+    int grid_sel = -1; std::string grid_info;                              // single-clicked cell → show info
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -351,9 +352,10 @@ struct StudioUI {
         ImGui::EndDisabled();
         if (path_enter) { grid_files.clear(); start_process(); }   // typed path/URL → single image
         if (!grid_files.empty()) {
-            ImGui::TextDisabled(u8"Grid: %d ảnh — look áp cho tất cả · bấm 1 ô để mở", (int)grid_files.size());
+            ImGui::TextDisabled(u8"Grid: %d ảnh · click=info, double-click=mở", (int)grid_files.size());
             ImGui::SameLine();
-            if (ImGui::SmallButton(u8"Bỏ grid")) { grid_files.clear(); start_process(); }
+            if (ImGui::SmallButton(u8"Bỏ grid")) { grid_files.clear(); grid_sel = -1; start_process(); }
+            if (grid_sel >= 0 && !grid_info.empty()) ImGui::TextWrapped(u8"ℹ %s", grid_info.c_str());
         } else {
             ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
         }
@@ -561,11 +563,16 @@ struct StudioUI {
                         if (idx < n) grid_hover = idx;
                     }
                     ImVec2 d = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
-                    if (grid_hover >= 0 && ImGui::IsItemDeactivated() &&
-                        std::fabs(d.x) < 4 && std::fabs(d.y) < 4) {   // click → open that image
+                    if (grid_hover >= 0 && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
                         std::snprintf(input_path, sizeof(input_path), "%s", grid_files[grid_hover].c_str());
-                        grid_back = grid_files;                       // remember grid → Esc returns to it
-                        grid_files.clear(); zoom = 1.f; pan = ImVec2(0, 0); start_process();
+                        grid_back = grid_files;                       // double-click → open; Esc returns to grid
+                        grid_files.clear(); grid_sel = -1; zoom = 1.f; pan = ImVec2(0, 0); start_process();
+                    } else if (grid_hover >= 0 && ImGui::IsItemDeactivated() &&
+                               std::fabs(d.x) < 4 && std::fabs(d.y) < 4) {   // single click → just show info
+                        grid_sel = grid_hover;
+                        const std::string& f = grid_files[grid_sel];
+                        grid_info = std::to_string(grid_sel + 1) + ". " + path_stem(f) +
+                                    " · " + human_size(f);
                     }
                 }
             }
@@ -583,17 +590,27 @@ struct StudioUI {
             ImDrawList* dl = ImGui::GetWindowDrawList();
             dl->PushClipRect(p0, ImVec2(p0.x + av.x, p0.y + av.y), true);
             dl->AddImage(ops.id(), ia, ib);
-            if (grid_hover >= 0) {                        // highlight the grid cell under the mouse
+            if (!grid_files.empty()) {                    // grid cell overlays: hover + selection
                 int n = (int)grid_files.size();
                 int cols = (int)std::ceil(std::sqrt((double)n));
                 int rows = (int)std::ceil((double)n / cols);
-                int col = grid_hover % cols, row = grid_hover / cols;
-                ImVec2 g0(ia.x + (float)col / cols * (ib.x - ia.x),
-                          ia.y + (float)row / rows * (ib.y - ia.y));
-                ImVec2 g1(ia.x + (float)(col + 1) / cols * (ib.x - ia.x),
-                          ia.y + (float)(row + 1) / rows * (ib.y - ia.y));
-                dl->AddRectFilled(g0, g1, IM_COL32(255, 210, 90, 38));
-                dl->AddRect(g0, g1, IM_COL32(255, 210, 90, 255), 0, 0, 3.f);
+                auto cell_rect = [&](int idx, ImVec2& g0, ImVec2& g1) {
+                    int col = idx % cols, row = idx / cols;
+                    g0 = ImVec2(ia.x + (float)col / cols * (ib.x - ia.x),
+                                ia.y + (float)row / rows * (ib.y - ia.y));
+                    g1 = ImVec2(ia.x + (float)(col + 1) / cols * (ib.x - ia.x),
+                                ia.y + (float)(row + 1) / rows * (ib.y - ia.y));
+                };
+                ImVec2 g0, g1;
+                if (grid_sel >= 0 && grid_sel < n) {      // selected (single-clicked) → cyan
+                    cell_rect(grid_sel, g0, g1);
+                    dl->AddRect(g0, g1, IM_COL32(90, 200, 255, 255), 0, 0, 3.f);
+                }
+                if (grid_hover >= 0) {                     // hovered → yellow
+                    cell_rect(grid_hover, g0, g1);
+                    dl->AddRectFilled(g0, g1, IM_COL32(255, 210, 90, 38));
+                    dl->AddRect(g0, g1, IM_COL32(255, 210, 90, 255), 0, 0, 3.f);
+                }
             }
             if (crop_mode) {                              // dim outside + bright selection + border
                 ImVec2 r0(ia.x + crop_x0*(ib.x-ia.x), ia.y + crop_y0*(ib.y-ia.y));
@@ -619,6 +636,7 @@ struct StudioUI {
             if (!pick_paths.empty()) {
                 grid_files = (pick_multi && pick_paths.size() >= 2) ? pick_paths
                                                                     : std::vector<std::string>();
+                grid_sel = -1; grid_info.clear();
                 std::snprintf(input_path, sizeof(input_path), "%s", pick_paths.front().c_str());
                 start_process();
             }
