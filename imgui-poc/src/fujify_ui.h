@@ -515,6 +515,7 @@ struct StudioUI {
             ImVec2 sz(tex_w * sc, tex_h * sc);
             ImVec2 c(p0.x + av.x * 0.5f + pan.x, p0.y + av.y * 0.5f + pan.y);
             ImVec2 ia(c.x - sz.x * 0.5f, c.y - sz.y * 0.5f), ib(ia.x + sz.x, ia.y + sz.y);
+            int grid_hover = -1;   // cell index under the mouse (for highlight + click)
 
             ImGui::InvisibleButton("canvas", av, ImGuiButtonFlags_MouseButtonLeft);
             ImGuiIO& io2 = ImGui::GetIO();
@@ -531,26 +532,24 @@ struct StudioUI {
                     zoom *= (1.f + io2.MouseWheel * 0.1f); if (zoom<0.1f) zoom=0.1f; if (zoom>8.f) zoom=8.f; }
                 if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
                     pan.x += io2.MouseDelta.x; pan.y += io2.MouseDelta.y; }
-                // grid: a click (not a pan) on a cell opens that single image
-                if (!grid_files.empty()) {
-                    if (ImGui::IsItemHovered()) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                // grid: highlight the cell under the mouse; a click (not a pan) opens it
+                if (!grid_files.empty() && ImGui::IsItemHovered() && ib.x > ia.x && ib.y > ia.y) {
+                    int n = (int)grid_files.size();
+                    int cols = (int)std::ceil(std::sqrt((double)n));
+                    int rows = (int)std::ceil((double)n / cols);
+                    float u = (io2.MousePos.x - ia.x) / (ib.x - ia.x);
+                    float v = (io2.MousePos.y - ia.y) / (ib.y - ia.y);
+                    if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
+                        int col = std::min(cols - 1, (int)(u * cols));
+                        int row = std::min(rows - 1, (int)(v * rows));
+                        int idx = row * cols + col;
+                        if (idx < n) grid_hover = idx;
+                    }
                     ImVec2 d = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
-                    if (ImGui::IsItemDeactivated() && std::fabs(d.x) < 4 && std::fabs(d.y) < 4
-                        && ib.x > ia.x && ib.y > ia.y) {
-                        float u = (io2.MousePos.x - ia.x) / (ib.x - ia.x);
-                        float v = (io2.MousePos.y - ia.y) / (ib.y - ia.y);
-                        if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
-                            int n = (int)grid_files.size();
-                            int cols = (int)std::ceil(std::sqrt((double)n));
-                            int rows = (int)std::ceil((double)n / cols);
-                            int col = std::min(cols - 1, (int)(u * cols));
-                            int row = std::min(rows - 1, (int)(v * rows));
-                            int idx = row * cols + col;
-                            if (idx >= 0 && idx < n) {     // open the clicked image (leave grid)
-                                std::snprintf(input_path, sizeof(input_path), "%s", grid_files[idx].c_str());
-                                grid_files.clear(); zoom = 1.f; pan = ImVec2(0, 0); start_process();
-                            }
-                        }
+                    if (grid_hover >= 0 && ImGui::IsItemDeactivated() &&
+                        std::fabs(d.x) < 4 && std::fabs(d.y) < 4) {   // click → open that image
+                        std::snprintf(input_path, sizeof(input_path), "%s", grid_files[grid_hover].c_str());
+                        grid_files.clear(); zoom = 1.f; pan = ImVec2(0, 0); start_process();
                     }
                 }
             }
@@ -558,6 +557,18 @@ struct StudioUI {
             ImDrawList* dl = ImGui::GetWindowDrawList();
             dl->PushClipRect(p0, ImVec2(p0.x + av.x, p0.y + av.y), true);
             dl->AddImage(ops.id(), ia, ib);
+            if (grid_hover >= 0) {                        // highlight the grid cell under the mouse
+                int n = (int)grid_files.size();
+                int cols = (int)std::ceil(std::sqrt((double)n));
+                int rows = (int)std::ceil((double)n / cols);
+                int col = grid_hover % cols, row = grid_hover / cols;
+                ImVec2 g0(ia.x + (float)col / cols * (ib.x - ia.x),
+                          ia.y + (float)row / rows * (ib.y - ia.y));
+                ImVec2 g1(ia.x + (float)(col + 1) / cols * (ib.x - ia.x),
+                          ia.y + (float)(row + 1) / rows * (ib.y - ia.y));
+                dl->AddRectFilled(g0, g1, IM_COL32(255, 210, 90, 38));
+                dl->AddRect(g0, g1, IM_COL32(255, 210, 90, 255), 0, 0, 3.f);
+            }
             if (crop_mode) {                              // dim outside + bright selection + border
                 ImVec2 r0(ia.x + crop_x0*(ib.x-ia.x), ia.y + crop_y0*(ib.y-ia.y));
                 ImVec2 r1(ia.x + crop_x1*(ib.x-ia.x), ia.y + crop_y1*(ib.y-ia.y));
