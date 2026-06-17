@@ -429,12 +429,12 @@ struct TextureOps {
 struct StudioUI {
     char  input_path[512];
     bool  use_temp = false; float temp = 5200.f, tint = 0.f; bool wb_auto = false;
-    float brightness = 0.15f, contrast = 0.10f, shadows = 0.f, highlights = 0.f;
+    float brightness = 0.f, contrast = 0.f, shadows = 0.f, highlights = 0.f;  // neutral: load = original
     int   preset_idx = 0;
     // live-preview debounce
     bool  live = true, dirty = false; double last_change = 0.0;
     bool  pu = false, pw = false; int pp = 0;
-    float pt = 5200.f, pti = 0.f, pb = 0.15f, pc = 0.10f, ps = 0.f, ph = 0.f;
+    float pt = 5200.f, pti = 0.f, pb = 0.f, pc = 0.f, ps = 0.f, ph = 0.f;
     // export
     int   ex_fmt_idx = 0, ex_tier_idx = 0; bool ex_brand = true;
     bool  show_export = false;   // tạm ẩn panel Export
