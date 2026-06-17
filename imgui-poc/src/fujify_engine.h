@@ -171,11 +171,22 @@ static inline std::string build_social_json(const std::string& src, const std::s
     return buf;
 }
 
-// Cloud upload request (engine PUTs the file to the Worker → private R2 library/).
-static inline std::string build_upload_json(const std::string& src, const std::string& name) {
-    char buf[2048];
+// Cloud upload request (engine PUTs the file to the Worker → user's private R2 library/).
+static inline std::string build_upload_json(const std::string& src, const std::string& name,
+                                            const std::string& token) {
+    char buf[3072];
     std::snprintf(buf, sizeof(buf),
-        "{\"mode\":\"upload\",\"input_path\":\"%s\",\"name\":\"%s\"}", src.c_str(), name.c_str());
+        "{\"mode\":\"upload\",\"input_path\":\"%s\",\"name\":\"%s\",\"token\":\"%s\"}",
+        src.c_str(), name.c_str(), token.c_str());
+    return buf;
+}
+
+// Account signup/login request (engine POSTs to the Worker /auth/*).
+static inline std::string build_auth_json(const char* mode, const std::string& email,
+                                          const std::string& pw) {
+    char buf[1024];
+    std::snprintf(buf, sizeof(buf),
+        "{\"mode\":\"%s\",\"email\":\"%s\",\"password\":\"%s\"}", mode, email.c_str(), pw.c_str());
     return buf;
 }
 

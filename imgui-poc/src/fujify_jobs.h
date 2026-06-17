@@ -8,18 +8,21 @@
 // coalesced by sequence number so dragging sliders never backs up a stale queue.
 
 struct Task {
-    enum Kind { Preview, Export, SaveTarget, Upload } kind = Preview;
+    enum Kind { Preview, Export, SaveTarget, Upload, Auth } kind = Preview;
     std::string input;
     bool  use_temp = false, wb_auto = false;
     float temp = 0, tint = 0, br = 0, co = 0, sh = 0, hi = 0;
     int   preset = 0;
     bool  all = false; int fmt_idx = 0, tier_idx = 0; bool brand = true;  // export-only
     int   target_kb = 500;                                                // save-target-only
+    std::string token;                                                    // upload-only
+    std::string email, password; bool signup = false;                     // auth-only
     uint64_t seq = 0;                                                     // preview coalescing
 };
 
 struct Result {
     Task::Kind kind = Task::Preview;
+    std::string token, email;   // auth-only: set on successful login/signup
     bool ok = false, reload_texture = false;
     int  ms = 0;
     std::string log;
@@ -84,11 +87,20 @@ private:
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]));
             if (!rf.ok) { r.ok = false; r.log = "Loi render:\n" + rf.log; }
             else {
-                EngineResult er = engine_run(*dmn, build_upload_json(kFullPath, path_stem(t.input) + ".jpg"));
+                EngineResult er = engine_run(*dmn, build_upload_json(kFullPath, path_stem(t.input) + ".jpg", t.token));
                 r.ok = er.ok;
                 r.log = er.ok ? ("Uploaded ☁ " + json_str_field(er.log.c_str(), "url"))
                               : ("Loi upload:\n" + er.log);
             }
+        } else if (t.kind == Task::Auth) {              // signup / login → token
+            EngineResult er = engine_run(*dmn,
+                build_auth_json(t.signup ? "auth_signup" : "auth_login", t.email, t.password));
+            r.ok = er.ok;
+            if (er.ok) {
+                r.token = json_str_field(er.log.c_str(), "token");
+                r.email = json_str_field(er.log.c_str(), "email");
+                r.log = "Logged in: " + r.email;
+            } else r.log = "Auth: " + er.log;
         } else if (is_video(t.input)) {                 // video → ffmpeg look export
             std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
             EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,

@@ -42,6 +42,51 @@ function cacheControl(key) {
   return "public, max-age=3600";
 }
 
+// ---- auth helpers (stateless HMAC tokens; passwords hashed in KV) ----
+const ENC = new TextEncoder();
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function unb64url(s) {
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(s), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function jsonRes(obj, status = 200) {
+  return new Response(JSON.stringify(obj),
+    { status, headers: { ...CORS, "Content-Type": "application/json" } });
+}
+function userKey(email) { return email.toLowerCase().replace(/[^a-z0-9]+/g, "_"); }
+async function hmacKey(secret) {
+  return crypto.subtle.importKey("raw", ENC.encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+async function makeToken(env, email) {
+  const payload = b64url(ENC.encode(JSON.stringify({ e: email, exp: Date.now() + 30 * 864e5 })));
+  const sig = b64url(await crypto.subtle.sign("HMAC", await hmacKey(env.AUTH_SECRET), ENC.encode(payload)));
+  return payload + "." + sig;
+}
+async function verifyToken(env, token) {
+  if (!token || !env.AUTH_SECRET) return null;
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return null;
+  const ok = await crypto.subtle.verify("HMAC", await hmacKey(env.AUTH_SECRET),
+    unb64url(sig), ENC.encode(payload));
+  if (!ok) return null;
+  try {
+    const p = JSON.parse(new TextDecoder().decode(unb64url(payload)));
+    return p.exp > Date.now() ? p.e : null;
+  } catch { return null; }
+}
+async function pbkdf2(password, salt) {
+  const base = await crypto.subtle.importKey("raw", ENC.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, base, 256);
+  return b64url(bits);
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -51,19 +96,38 @@ export default {
     const url = new URL(request.url);
     let key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
 
-    // Authenticated upload: PUT /library/<name> (Bearer UPLOAD_TOKEN) → write to R2.
+    // --- accounts: POST /auth/signup | /auth/login → { ok, token, email } ---
+    if (request.method === "POST" && (key === "auth/signup" || key === "auth/login")) {
+      if (!env.AUTH_SECRET) return jsonRes({ ok: false, error: "server not configured" }, 500);
+      let body; try { body = await request.json(); } catch { body = null; }
+      const email = (body?.email || "").trim().toLowerCase();
+      const password = body?.password || "";
+      if (!email || !password) return jsonRes({ ok: false, error: "email & password required" }, 400);
+      const existing = await env.USERS.get(email);
+      if (key === "auth/signup") {
+        if (existing) return jsonRes({ ok: false, error: "email already registered" }, 409);
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        await env.USERS.put(email, JSON.stringify({ salt: b64url(salt), hash: await pbkdf2(password, salt) }));
+      } else {
+        if (!existing) return jsonRes({ ok: false, error: "no such account" }, 401);
+        const rec = JSON.parse(existing);
+        if (await pbkdf2(password, unb64url(rec.salt)) !== rec.hash)
+          return jsonRes({ ok: false, error: "wrong password" }, 401);
+      }
+      return jsonRes({ ok: true, token: await makeToken(env, email), email });
+    }
+
+    // --- authenticated upload: PUT /library/<name> (Bearer login token) → user's folder ---
     if (request.method === "PUT") {
       if (!key.startsWith("library/") || key.includes(".."))
         return new Response("Forbidden", { status: 403, headers: CORS });
-      const auth = request.headers.get("Authorization") || "";
-      if (!env.UPLOAD_TOKEN || auth !== "Bearer " + env.UPLOAD_TOKEN)
-        return new Response("Unauthorized", { status: 401, headers: CORS });
-      const obj = await env.BUCKET.put(key, request.body, {
-        httpMetadata: { contentType: contentType(key) },
+      const email = await verifyToken(env, (request.headers.get("Authorization") || "").replace(/^Bearer\s+/, ""));
+      if (!email) return new Response("Unauthorized", { status: 401, headers: CORS });
+      const scoped = "library/" + userKey(email) + "/" + key.slice("library/".length);
+      const obj = await env.BUCKET.put(scoped, request.body, {
+        httpMetadata: { contentType: contentType(scoped) },
       });
-      return new Response(JSON.stringify({ ok: true, key, size: obj.size }), {
-        status: 201, headers: { ...CORS, "Content-Type": "application/json" },
-      });
+      return jsonRes({ ok: true, key: scoped, size: obj.size }, 201);
     }
 
     if (request.method !== "GET" && request.method !== "HEAD") {

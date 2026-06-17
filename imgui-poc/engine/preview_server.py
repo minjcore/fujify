@@ -20,13 +20,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 from pathlib import Path
 from time import perf_counter
 
-# Cloud upload goes through the fujify-cdn Worker (PUT /library/<name> + Bearer token).
-UPLOAD_BASE = os.environ.get("FUJIFY_UPLOAD_URL",
-                             "https://fujify-cdn.caokhang91.workers.dev/library/")
+# Cloud goes through the fujify-cdn Worker: /auth/* for accounts, PUT /library/<name> to store.
+_WORKER = os.environ.get("FUJIFY_WORKER", "https://fujify-cdn.caokhang91.workers.dev")
+UPLOAD_BASE = os.environ.get("FUJIFY_UPLOAD_URL", _WORKER + "/library/")
+AUTH_BASE = os.environ.get("FUJIFY_AUTH_URL", _WORKER + "/auth/")
 
 
 def _resolve_ffmpeg() -> str:
@@ -279,15 +281,40 @@ def _save_target(req: dict) -> dict:
             "bytes": len(data), "kb": round(len(data) / 1024), "quality": q}
 
 
+def _auth(mode: str, req: dict) -> dict:
+    """Account signup/login via the Worker → returns a signed token for uploads."""
+    t0 = perf_counter()
+    kind = "signup" if mode == "auth_signup" else "login"
+    email = (req.get("email") or "").strip().lower()
+    password = req.get("password") or ""
+    if not email or not password:
+        raise PreviewError(ERR_BAD_REQUEST, "email & password required")
+    body = json.dumps({"email": email, "password": password}).encode()
+    rq = urllib.request.Request(AUTH_BASE + kind, data=body, method="POST",
+        headers={"Content-Type": "application/json", "User-Agent": "fujify-studio/0.1"})
+    try:
+        with urllib.request.urlopen(rq, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        try: data = json.loads(e.read().decode())
+        except Exception: data = {"ok": False, "error": f"HTTP {e.code}"}
+    except Exception as exc:  # noqa: BLE001
+        raise PreviewError(ERR_SAVE_FAILED, f"auth: {exc}") from exc
+    if not data.get("ok"):
+        raise PreviewError(ERR_BAD_REQUEST, data.get("error", "auth failed"))
+    return {"ok": True, "mode": mode, "ms": int((perf_counter() - t0) * 1000),
+            "token": data.get("token", ""), "email": data.get("email", email)}
+
+
 def _upload(req: dict) -> dict:
-    """PUT a local file to the cloud (Worker → private R2) under library/<name>."""
+    """PUT a local file to the cloud (Worker → private R2) under the user's library/."""
     t0 = perf_counter()
     src = Path(req["input_path"]).expanduser().resolve()
     if not src.is_file():
         raise PreviewError(ERR_FILE_NOT_FOUND, f"not found: {src}")
-    token = os.environ.get("FUJIFY_UPLOAD_TOKEN")
+    token = req.get("token") or os.environ.get("FUJIFY_UPLOAD_TOKEN")
     if not token:
-        raise PreviewError(ERR_BAD_REQUEST, "FUJIFY_UPLOAD_TOKEN not set")
+        raise PreviewError(ERR_BAD_REQUEST, "not logged in (no token)")
     name = (req.get("name") or src.name).replace("/", "_")
     url = UPLOAD_BASE + name
     data = src.read_bytes()
@@ -306,8 +333,11 @@ def _upload(req: dict) -> dict:
 def _handle(req: dict) -> dict:
     t0 = perf_counter()
     mode = req.get("mode", "preview")
-    if mode not in ("preview", "full", "social", "video_export", "save_target", "upload"):
+    if mode not in ("preview", "full", "social", "video_export", "save_target", "upload",
+                    "auth_login", "auth_signup"):
         raise PreviewError(ERR_BAD_REQUEST, f"unknown mode '{mode}'")
+    if mode in ("auth_login", "auth_signup"):
+        return _auth(mode, req)
     if mode == "upload":
         return _upload(req)
     if not req.get("output_path"):

@@ -101,6 +101,8 @@ struct StudioUI {
     int   ex_fmt_idx = 0, ex_tier_idx = 0; bool ex_brand = true;
     bool  show_export = false;   // tạm ẩn panel Export
     int   target_kb = 500;       // save-to-target-size
+    char  acct_email[128] = "", acct_pw[128] = "";   // login form
+    std::string cloud_token, cloud_email;            // session (persisted)
     std::string ex_status, status;
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
@@ -123,6 +125,7 @@ struct StudioUI {
         daemon = start_daemon();
         js.reset(new JobSystem(&daemon));   // starts the single consumer thread
         load_recents();
+        load_session();
         start_process();                    // auto-load on launch
     }
 
@@ -163,7 +166,37 @@ struct StudioUI {
         js->submit(t);
     }
 
-    void start_upload() { js->submit(make_task(Task::Upload)); }
+    void start_upload() {
+        Task t = make_task(Task::Upload);
+        t.token = cloud_token;
+        js->submit(t);
+    }
+    void start_auth(bool signup) {
+        Task t; t.kind = Task::Auth; t.signup = signup;
+        t.email = acct_email; t.password = acct_pw;
+        js->submit(t);
+    }
+
+    // --- session (persist email+token to ~/.fujify_session) ---
+    std::string session_path() {
+        const char* h = getenv("HOME");
+        return std::string(h ? h : "/tmp") + "/.fujify_session";
+    }
+    void load_session() {
+        FILE* f = std::fopen(session_path().c_str(), "r");
+        if (!f) return;
+        char e[256] = {0}, t[1200] = {0};
+        auto strip = [](char* s) { for (char* p = s; *p; ++p) if (*p == '\n' || *p == '\r') { *p = 0; break; } };
+        if (std::fgets(e, sizeof(e), f)) { strip(e); cloud_email = e; }
+        if (std::fgets(t, sizeof(t), f)) { strip(t); cloud_token = t; }
+        std::fclose(f);
+    }
+    void save_session() {
+        FILE* f = std::fopen(session_path().c_str(), "w");
+        if (!f) return;
+        std::fprintf(f, "%s\n%s\n", cloud_email.c_str(), cloud_token.c_str());
+        std::fclose(f);
+    }
 
     void start_export(bool all) {
         Task t = make_task(Task::Export);
@@ -348,10 +381,24 @@ struct StudioUI {
         if (is_video(input_path)) ImGui::TextDisabled("(target-size cho ảnh; video dùng Export video)");
 
         ImGui::SeparatorText(u8"Cloud ☁");
-        ImGui::BeginDisabled(!has_tex || is_video(input_path));
-        if (ImGui::Button("Upload to cloud", ImVec2(-1, 0))) start_upload();
-        ImGui::EndDisabled();
-        ImGui::TextDisabled("PUT full-res → R2 private (library/)");
+        if (cloud_token.empty()) {
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputTextWithHint("##email", "email", acct_email, sizeof(acct_email));
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputTextWithHint("##pw", "password", acct_pw, sizeof(acct_pw),
+                                     ImGuiInputTextFlags_Password);
+            if (ImGui::Button("Login", ImVec2(-90, 0))) start_auth(false);
+            ImGui::SameLine();
+            if (ImGui::Button("Sign up", ImVec2(-1, 0))) start_auth(true);
+        } else {
+            ImGui::Text("☁ %s", cloud_email.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Logout")) { cloud_token.clear(); cloud_email.clear(); save_session(); }
+            ImGui::BeginDisabled(!has_tex || is_video(input_path));
+            if (ImGui::Button("Upload to cloud", ImVec2(-1, 0))) start_upload();
+            ImGui::EndDisabled();
+            ImGui::TextDisabled("PUT full-res → R2 private (library/<user>/)");
+        }
 
         if (show_export) {   // tạm ẩn nút export (đặt show_export=true để bật lại)
             bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy
@@ -416,7 +463,10 @@ struct StudioUI {
         // ---- drain finished jobs (UI thread owns the graphics context) ----
         Result r; bool need_upload = false; std::string preview_log;
         while (js->poll(r)) {
-            if (r.kind == Task::Export) ex_status = r.log;
+            if (r.kind == Task::Auth) {
+                status = r.log;
+                if (r.ok) { cloud_token = r.token; cloud_email = r.email; acct_pw[0] = 0; save_session(); }
+            } else if (r.kind == Task::Export) ex_status = r.log;
             else { status = r.log; if (r.reload_texture && r.ok) { need_upload = true; preview_log = r.log; } }
         }
         if (need_upload) {
