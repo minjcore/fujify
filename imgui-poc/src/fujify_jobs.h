@@ -8,7 +8,7 @@
 // coalesced by sequence number so dragging sliders never backs up a stale queue.
 
 struct Task {
-    enum Kind { Preview, Export, SaveTarget } kind = Preview;
+    enum Kind { Preview, Export, SaveTarget, Upload } kind = Preview;
     std::string input;
     bool  use_temp = false, wb_auto = false;
     float temp = 0, tint = 0, br = 0, co = 0, sh = 0, hi = 0;
@@ -79,6 +79,16 @@ private:
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], t.target_kb));
             r.ok = er.ok;
             r.log = er.ok ? ("Saved → " + out + "\n" + er.log) : ("Loi save:\n" + er.log);
+        } else if (t.kind == Task::Upload) {            // render full-res → PUT to cloud
+            EngineResult rf = engine_run(*dmn, build_json("full", t.input, kFullPath, 0,
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]));
+            if (!rf.ok) { r.ok = false; r.log = "Loi render:\n" + rf.log; }
+            else {
+                EngineResult er = engine_run(*dmn, build_upload_json(kFullPath, path_stem(t.input) + ".jpg"));
+                r.ok = er.ok;
+                r.log = er.ok ? ("Uploaded ☁ " + json_str_field(er.log.c_str(), "url"))
+                              : ("Loi upload:\n" + er.log);
+            }
         } else if (is_video(t.input)) {                 // video → ffmpeg look export
             std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
             EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,

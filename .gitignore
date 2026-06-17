@@ -40,3 +40,6 @@ web/worker/.wrangler/
 RapidRAW/
 PixPic/
 photo-editor/
+
+# upload token (secret)
+.fujify_upload_token

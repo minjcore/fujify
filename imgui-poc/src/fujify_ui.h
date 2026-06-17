@@ -163,6 +163,8 @@ struct StudioUI {
         js->submit(t);
     }
 
+    void start_upload() { js->submit(make_task(Task::Upload)); }
+
     void start_export(bool all) {
         Task t = make_task(Task::Export);
         t.all = all; t.fmt_idx = ex_fmt_idx; t.tier_idx = ex_tier_idx; t.brand = ex_brand;
@@ -344,6 +346,12 @@ struct StudioUI {
         if (ImGui::Button("Save ~KB", ImVec2(-1, 0))) start_save_target();
         ImGui::EndDisabled();
         if (is_video(input_path)) ImGui::TextDisabled("(target-size cho ảnh; video dùng Export video)");
+
+        ImGui::SeparatorText(u8"Cloud ☁");
+        ImGui::BeginDisabled(!has_tex || is_video(input_path));
+        if (ImGui::Button("Upload to cloud", ImVec2(-1, 0))) start_upload();
+        ImGui::EndDisabled();
+        ImGui::TextDisabled("PUT full-res → R2 private (library/)");
 
         if (show_export) {   // tạm ẩn nút export (đặt show_export=true để bật lại)
             bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy

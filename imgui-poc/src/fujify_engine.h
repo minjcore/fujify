@@ -171,6 +171,14 @@ static inline std::string build_social_json(const std::string& src, const std::s
     return buf;
 }
 
+// Cloud upload request (engine PUTs the file to the Worker → private R2 library/).
+static inline std::string build_upload_json(const std::string& src, const std::string& name) {
+    char buf[2048];
+    std::snprintf(buf, sizeof(buf),
+        "{\"mode\":\"upload\",\"input_path\":\"%s\",\"name\":\"%s\"}", src.c_str(), name.c_str());
+    return buf;
+}
+
 // Native macOS open dialog via osascript (no extra framework). Returns "" on cancel.
 static inline std::string pick_file() {
     const char* cmd =

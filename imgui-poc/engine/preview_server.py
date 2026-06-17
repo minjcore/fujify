@@ -20,8 +20,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 from time import perf_counter
+
+# Cloud upload goes through the fujify-cdn Worker (PUT /library/<name> + Bearer token).
+UPLOAD_BASE = os.environ.get("FUJIFY_UPLOAD_URL",
+                             "https://fujify-cdn.caokhang91.workers.dev/library/")
 
 
 def _resolve_ffmpeg() -> str:
@@ -274,11 +279,37 @@ def _save_target(req: dict) -> dict:
             "bytes": len(data), "kb": round(len(data) / 1024), "quality": q}
 
 
+def _upload(req: dict) -> dict:
+    """PUT a local file to the cloud (Worker → private R2) under library/<name>."""
+    t0 = perf_counter()
+    src = Path(req["input_path"]).expanduser().resolve()
+    if not src.is_file():
+        raise PreviewError(ERR_FILE_NOT_FOUND, f"not found: {src}")
+    token = os.environ.get("FUJIFY_UPLOAD_TOKEN")
+    if not token:
+        raise PreviewError(ERR_BAD_REQUEST, "FUJIFY_UPLOAD_TOKEN not set")
+    name = (req.get("name") or src.name).replace("/", "_")
+    url = UPLOAD_BASE + name
+    data = src.read_bytes()
+    rq = urllib.request.Request(url, data=data, method="PUT", headers={
+        "Authorization": "Bearer " + token, "Content-Type": "application/octet-stream",
+        "User-Agent": "fujify-studio/0.1"})   # Cloudflare 403s the default Python-urllib UA
+    try:
+        with urllib.request.urlopen(rq, timeout=300) as resp:
+            resp.read()
+    except Exception as exc:  # noqa: BLE001
+        raise PreviewError(ERR_SAVE_FAILED, f"upload: {exc}") from exc
+    return {"ok": True, "ms": int((perf_counter() - t0) * 1000), "mode": "upload",
+            "url": url, "kb": round(len(data) / 1024)}
+
+
 def _handle(req: dict) -> dict:
     t0 = perf_counter()
     mode = req.get("mode", "preview")
-    if mode not in ("preview", "full", "social", "video_export", "save_target"):
+    if mode not in ("preview", "full", "social", "video_export", "save_target", "upload"):
         raise PreviewError(ERR_BAD_REQUEST, f"unknown mode '{mode}'")
+    if mode == "upload":
+        return _upload(req)
     if not req.get("output_path"):
         raise PreviewError(ERR_BAD_REQUEST, "missing 'output_path'")
 

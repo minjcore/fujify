@@ -12,8 +12,8 @@
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-  "Access-Control-Allow-Headers": "Range, If-None-Match, If-Modified-Since",
+  "Access-Control-Allow-Methods": "GET, HEAD, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Range, If-None-Match, If-Modified-Since, Authorization, Content-Type",
   "Access-Control-Expose-Headers": "Content-Length, Content-Range, ETag, Accept-Ranges",
 };
 
@@ -47,12 +47,28 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
     }
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Method Not Allowed", { status: 405, headers: CORS });
-    }
 
     const url = new URL(request.url);
     let key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+
+    // Authenticated upload: PUT /library/<name> (Bearer UPLOAD_TOKEN) → write to R2.
+    if (request.method === "PUT") {
+      if (!key.startsWith("library/") || key.includes(".."))
+        return new Response("Forbidden", { status: 403, headers: CORS });
+      const auth = request.headers.get("Authorization") || "";
+      if (!env.UPLOAD_TOKEN || auth !== "Bearer " + env.UPLOAD_TOKEN)
+        return new Response("Unauthorized", { status: 401, headers: CORS });
+      const obj = await env.BUCKET.put(key, request.body, {
+        httpMetadata: { contentType: contentType(key) },
+      });
+      return new Response(JSON.stringify({ ok: true, key, size: obj.size }), {
+        status: 201, headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return new Response("Method Not Allowed", { status: 405, headers: CORS });
+    }
 
     if (key === "" || key === "index.html") {
       return new Response("Fujify CDN — ok\n", {
