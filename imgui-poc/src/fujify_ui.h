@@ -532,6 +532,20 @@ struct StudioUI {
                     zoom *= (1.f + io2.MouseWheel * 0.1f); if (zoom<0.1f) zoom=0.1f; if (zoom>8.f) zoom=8.f; }
                 if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
                     pan.x += io2.MouseDelta.x; pan.y += io2.MouseDelta.y; }
+                // double-click (single image): toggle zoom, keeping the clicked point under the cursor
+                if (grid_files.empty() && ImGui::IsItemHovered() &&
+                    ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ib.x > ia.x && ib.y > ia.y) {
+                    if (zoom <= 1.01f) {
+                        float nx = (io2.MousePos.x - ia.x) / (ib.x - ia.x);
+                        float ny = (io2.MousePos.y - ia.y) / (ib.y - ia.y);
+                        zoom = 2.5f;
+                        float sx = tex_w * fit * zoom, sy = tex_h * fit * zoom;
+                        pan.x = io2.MousePos.x - sx * (nx - 0.5f) - (p0.x + av.x * 0.5f);
+                        pan.y = io2.MousePos.y - sy * (ny - 0.5f) - (p0.y + av.y * 0.5f);
+                    } else {
+                        zoom = 1.f; pan = ImVec2(0, 0);   // double-click again → back to fit
+                    }
+                }
                 // grid: highlight the cell under the mouse; a click (not a pan) opens it
                 if (!grid_files.empty() && ImGui::IsItemHovered() && ib.x > ia.x && ib.y > ia.y) {
                     int n = (int)grid_files.size();
