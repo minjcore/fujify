@@ -106,6 +106,7 @@ struct StudioUI {
     bool pick_pending = false, pick_ready = false, pick_multi = false;     // native chooser (modeless)
     std::vector<std::string> pick_paths;                                   // chooser result
     std::vector<std::string> grid_files;                                   // ≥2 → contact-sheet preview
+    std::vector<std::string> grid_back;                                    // grid to restore on Esc
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -563,8 +564,19 @@ struct StudioUI {
                     if (grid_hover >= 0 && ImGui::IsItemDeactivated() &&
                         std::fabs(d.x) < 4 && std::fabs(d.y) < 4) {   // click → open that image
                         std::snprintf(input_path, sizeof(input_path), "%s", grid_files[grid_hover].c_str());
+                        grid_back = grid_files;                       // remember grid → Esc returns to it
                         grid_files.clear(); zoom = 1.f; pan = ImVec2(0, 0); start_process();
                     }
+                }
+            }
+
+            // Esc → step back: un-zoom first; else if we drilled in from a grid, return to it
+            if (ImGui::IsKeyPressed(ImGuiKey_Escape) && !pick_pending) {
+                if (crop_mode) { crop_mode = false; start_process(); }
+                else if (zoom > 1.01f) { zoom = 1.f; pan = ImVec2(0, 0); }
+                else if (!grid_back.empty()) {
+                    grid_files = grid_back; grid_back.clear();
+                    zoom = 1.f; pan = ImVec2(0, 0); start_process();
                 }
             }
 
