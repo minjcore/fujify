@@ -210,9 +210,11 @@ static inline std::string build_auth_json(const char* mode, const std::string& e
 }
 
 // Native macOS open dialog via osascript (no extra framework). Returns "" on cancel.
+// `activate` brings the chooser frontmost so ESC / Cancel reach it (Esc → try swallows
+// the user-cancelled error → no output → ""); the app keeps running, no quit.
 static inline std::string pick_file() {
     const char* cmd =
-        "osascript -e 'try' "
+        "osascript -e 'activate' -e 'try' "
         "-e 'POSIX path of (choose file with prompt \"Chon anh RAW / JPEG\")' "
         "-e 'end try' 2>/dev/null";
     FILE* p = popen(cmd, "r");
