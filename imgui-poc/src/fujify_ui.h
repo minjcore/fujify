@@ -2,6 +2,7 @@
 #pragma once
 #include "imgui.h"
 #include "fujify_jobs.h"
+#include <map>
 
 // ---- fonts --------------------------------------------------------------
 
@@ -78,6 +79,8 @@ struct EditState {
     bool use_temp = false, wb_auto = false;
     float temp = 5200.f, tint = 0.f, br = 0.f, co = 0.f, sh = 0.f, hi = 0.f;
     int preset = 0;
+    float crop[4] = {0.f, 0.f, 1.f, 1.f};   // per-image geometry too
+    int rotate = 0;
 };
 
 struct TextureOps {
@@ -108,6 +111,8 @@ struct StudioUI {
     std::vector<std::string> grid_files;                                   // ≥2 → contact-sheet preview
     std::vector<std::string> grid_back;                                    // grid to restore on Esc
     int grid_sel = -1; std::string grid_info;                              // single-clicked cell → show info
+    std::map<std::string, EditState> img_states;                           // per-image edits (the "data")
+    std::string loaded_path;                                               // image whose state is active now
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -134,6 +139,7 @@ struct StudioUI {
         load_recents();
         load_session();
         if (!cloud_token.empty()) start_lib_list();   // already signed in → show library
+        loaded_path = input_path;           // track the first image's state
         start_process();                    // auto-load on launch
     }
 
@@ -157,6 +163,36 @@ struct StudioUI {
     void start_process() {
         if (recents.empty() || recents.front() != input_path) add_recent(input_path);
         js->submit(make_task(Task::Preview));
+    }
+
+    // ---- per-image edit state (each image keeps its own look + crop/rotate) ----
+    EditState capture_state() const {
+        EditState e; e.use_temp = use_temp; e.wb_auto = wb_auto; e.temp = temp; e.tint = tint;
+        e.br = brightness; e.co = contrast; e.sh = shadows; e.hi = highlights; e.preset = preset_idx;
+        e.crop[0] = crop_x0; e.crop[1] = crop_y0; e.crop[2] = crop_x1; e.crop[3] = crop_y1;
+        e.rotate = rotate; return e;
+    }
+    void restore_state(const EditState& e) {
+        use_temp = e.use_temp; wb_auto = e.wb_auto; temp = e.temp; tint = e.tint;
+        brightness = e.br; contrast = e.co; shadows = e.sh; highlights = e.hi; preset_idx = e.preset;
+        crop_x0 = e.crop[0]; crop_y0 = e.crop[1]; crop_x1 = e.crop[2]; crop_y1 = e.crop[3];
+        rotate = e.rotate; crop_mode = false;
+        pu = use_temp; pw = wb_auto; pp = preset_idx;            // sync change-detector (no double-fire)
+        pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
+    }
+    void stash_current() {                                        // remember the active image's edits
+        if (!loaded_path.empty()) img_states[loaded_path] = capture_state();
+    }
+    // Switch to a single image, preserving the one we leave and restoring the target's edits.
+    void switch_to(const std::string& path) {
+        if (path.empty()) return;
+        if (loaded_path != path) stash_current();
+        loaded_path = path;
+        std::snprintf(input_path, sizeof(input_path), "%s", path.c_str());
+        auto it = img_states.find(path);
+        restore_state(it != img_states.end() ? it->second : EditState());   // saved edits, else neutral
+        grid_files.clear(); grid_sel = -1;                       // leaving grid (grid_back kept for Esc)
+        start_process(); dirty = false;
     }
     // Open the native chooser (modeless). exts empty → any file; multi → select several.
     void open_file_dialog(const std::vector<std::string>& exts = std::vector<std::string>(),
@@ -275,9 +311,7 @@ struct StudioUI {
             std::string name = (s == std::string::npos) ? full : full.substr(s + 1);
             ImGui::PushID((int)i);
             if (ImGui::Selectable(name.c_str())) {
-                std::snprintf(input_path, sizeof(input_path), "%s", full.c_str());
-                grid_files.clear();        // recents open a single image
-                start_process();
+                switch_to(std::string(full));      // recents open a single image (its own state)
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", full.c_str());
             ImGui::PopID();
@@ -350,7 +384,7 @@ struct StudioUI {
         if (ImGui::Button(u8"▦ Chọn nhiều ảnh (grid)...", ImVec2(-1, 0)))
             open_file_dialog({}, /*multi=*/true);
         ImGui::EndDisabled();
-        if (path_enter) { grid_files.clear(); start_process(); }   // typed path/URL → single image
+        if (path_enter) switch_to(std::string(input_path));   // typed path/URL → single image (its own state)
         if (!grid_files.empty()) {
             ImGui::TextDisabled(u8"Grid: %d ảnh · click=info, double-click=mở", (int)grid_files.size());
             ImGui::SameLine();
@@ -564,9 +598,10 @@ struct StudioUI {
                     }
                     ImVec2 d = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
                     if (grid_hover >= 0 && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                        std::snprintf(input_path, sizeof(input_path), "%s", grid_files[grid_hover].c_str());
+                        std::string sel = grid_files[grid_hover];     // copy before switch_to clears grid
                         grid_back = grid_files;                       // double-click → open; Esc returns to grid
-                        grid_files.clear(); grid_sel = -1; zoom = 1.f; pan = ImVec2(0, 0); start_process();
+                        zoom = 1.f; pan = ImVec2(0, 0);
+                        switch_to(sel);                               // open with its own per-image state
                     } else if (grid_hover >= 0 && ImGui::IsItemDeactivated() &&
                                std::fabs(d.x) < 4 && std::fabs(d.y) < 4) {   // single click → just show info
                         grid_sel = grid_hover;
@@ -582,7 +617,8 @@ struct StudioUI {
                 if (crop_mode) { crop_mode = false; start_process(); }
                 else if (zoom > 1.01f) { zoom = 1.f; pan = ImVec2(0, 0); }
                 else if (!grid_back.empty()) {
-                    grid_files = grid_back; grid_back.clear();
+                    stash_current(); loaded_path.clear();   // save the image we were editing
+                    grid_files = grid_back; grid_back.clear(); grid_sel = -1;
                     zoom = 1.f; pan = ImVec2(0, 0); start_process();
                 }
             }
@@ -634,11 +670,14 @@ struct StudioUI {
         if (pick_ready) {
             pick_ready = false;
             if (!pick_paths.empty()) {
-                grid_files = (pick_multi && pick_paths.size() >= 2) ? pick_paths
-                                                                    : std::vector<std::string>();
-                grid_sel = -1; grid_info.clear();
-                std::snprintf(input_path, sizeof(input_path), "%s", pick_paths.front().c_str());
-                start_process();
+                if (pick_multi && pick_paths.size() >= 2) {         // grid (multi-image view)
+                    stash_current(); loaded_path.clear();
+                    grid_files = pick_paths; grid_sel = -1; grid_info.clear();
+                    std::snprintf(input_path, sizeof(input_path), "%s", pick_paths.front().c_str());
+                    start_process();
+                } else {
+                    switch_to(pick_paths.front());                  // single image → its own state
+                }
             }
         }
 
@@ -660,9 +699,7 @@ struct StudioUI {
             } else if (r.kind == Task::LibGet) {
                 status = r.log;
                 if (r.ok && !r.path.empty()) {
-                    std::snprintf(input_path, sizeof(input_path), "%s", r.path.c_str());
-                    grid_files.clear();        // library opens a single image
-                    start_process();   // open the downloaded image
+                    switch_to(r.path);   // library opens a single image (its own state)
                 }
             } else if (r.kind == Task::Export) { ex_status = r.log; if (r.ok && !r.path.empty()) ex_path = r.path; }
             else if (r.kind == Task::SaveTarget) { status = r.log; if (r.ok && !r.path.empty()) ex_path = r.path; }
