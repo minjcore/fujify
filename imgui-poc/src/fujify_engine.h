@@ -236,6 +236,15 @@ static inline bool is_video(const std::string& p) {
     for (char& c : e) c = (char)tolower((unsigned char)c);
     return e == ".mp4" || e == ".mov" || e == ".m4v" || e == ".avi" || e == ".mkv" || e == ".webm";
 }
+static inline bool is_image(const std::string& p) {
+    auto d = p.find_last_of('.');
+    if (d == std::string::npos) return false;
+    std::string e = p.substr(d);
+    for (char& c : e) c = (char)tolower((unsigned char)c);
+    return e == ".jpg" || e == ".jpeg" || e == ".png" || e == ".webp" || e == ".tif" ||
+           e == ".tiff" || e == ".bmp" || e == ".arw" || e == ".dng" || e == ".nef" ||
+           e == ".cr2" || e == ".cr3" || e == ".raf" || e == ".rw2" || e == ".orf";
+}
 
 // ---- presets / formats ----
 static const char* kPresets[]   = {"(none)", "case01_flower_warm_fix",

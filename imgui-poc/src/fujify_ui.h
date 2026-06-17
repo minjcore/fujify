@@ -482,7 +482,12 @@ struct StudioUI {
                             start_lib_list(); }
             } else if (r.kind == Task::LibList) {
                 status = r.log;
-                if (r.ok) { lib_names = split_pipe(r.names); lib_keys = split_pipe(r.keys); }
+                if (r.ok) {                                  // keep only images (hide .txt etc.)
+                    auto names = split_pipe(r.names), keys = split_pipe(r.keys);
+                    lib_names.clear(); lib_keys.clear();
+                    for (size_t i = 0; i < names.size() && i < keys.size(); i++)
+                        if (is_image(names[i])) { lib_names.push_back(names[i]); lib_keys.push_back(keys[i]); }
+                }
             } else if (r.kind == Task::LibGet) {
                 status = r.log;
                 if (r.ok && !r.path.empty()) {
