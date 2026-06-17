@@ -453,12 +453,7 @@ struct StudioUI {
             ImGui::SameLine(); ImGui::SetNextItemWidth(130);
             ImGui::SliderFloat("##zoom", &zoom, 0.1f, 8.0f, "zoom %.2fx");
             ImGui::SameLine();
-            if (ImGui::SmallButton("⟲")) {   // rotate 90° CCW — crop rect no longer maps, reset it
-                rotate = (rotate + 270) % 360; crop_x0 = crop_y0 = 0.f; crop_x1 = crop_y1 = 1.f;
-                zoom = 1.f; pan = ImVec2(0, 0); start_process();
-            }
-            ImGui::SameLine();
-            if (ImGui::SmallButton("⟳")) {   // rotate 90° CW
+            if (ImGui::SmallButton("⟳ Xoay")) {   // rotate 90° CW each press; crop rect no longer maps, reset it
                 rotate = (rotate + 90) % 360; crop_x0 = crop_y0 = 0.f; crop_x1 = crop_y1 = 1.f;
                 zoom = 1.f; pan = ImVec2(0, 0); start_process();
             }
