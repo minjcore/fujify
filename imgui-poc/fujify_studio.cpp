@@ -16,7 +16,7 @@
 // ---- OpenGL texture -----------------------------------------------------
 struct GLTexture { GLuint id = 0; int w = 0, h = 0; };
 
-static bool gl_upload(GLTexture& t, const char* path) {
+static bool gl_upload(GLTexture& t, const char* path, Histogram* hist) {
     int w, h, n;
     unsigned char* data = stbi_load(path, &w, &h, &n, 4);
     if (!data) return false;
@@ -28,6 +28,7 @@ static bool gl_upload(GLTexture& t, const char* path) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    if (hist) compute_histogram(data, w, h, hist);
     stbi_image_free(data);
     t.w = w; t.h = h;
     return true;
@@ -58,8 +59,8 @@ int main(int, char**) {
 
     GLTexture tex;
     TextureOps ops;
-    ops.upload = [&](const char* p, int* w, int* h) {
-        if (!gl_upload(tex, p)) return false;
+    ops.upload = [&](const char* p, int* w, int* h, Histogram* hist) {
+        if (!gl_upload(tex, p, hist)) return false;
         *w = tex.w; *h = tex.h; return true;
     };
     ops.id = [&]() { return (ImTextureID)(intptr_t)tex.id; };

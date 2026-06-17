@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <thread>
 #include <mutex>
@@ -382,10 +383,30 @@ static inline void fujify_bundle_autoconfig() {
     if (!getenv("FUJIFY_SAMPLE") && exists(smp)) setenv("FUJIFY_SAMPLE", smp.c_str(), 1);
 }
 
+// RGB histogram of the displayed image (filled by the backend from decoded pixels).
+static const int kHistBins = 128;
+struct Histogram {
+    float r[kHistBins], g[kHistBins], b[kHistBins];
+    float maxv = 1.0f; bool valid = false;
+};
+static inline void compute_histogram(const unsigned char* rgba, int w, int h, Histogram* o) {
+    for (int i = 0; i < kHistBins; i++) o->r[i] = o->g[i] = o->b[i] = 0.f;
+    size_t n = (size_t)w * h;
+    for (size_t i = 0; i < n; i++) {
+        const unsigned char* px = rgba + i * 4;
+        o->r[px[0] >> 1]++; o->g[px[1] >> 1]++; o->b[px[2] >> 1]++;   // 256 → 128 bins
+    }
+    float m = 1.f;
+    for (int i = 0; i < kHistBins; i++) {
+        m = std::max(m, o->r[i]); m = std::max(m, o->g[i]); m = std::max(m, o->b[i]);
+    }
+    o->maxv = m; o->valid = true;
+}
+
 struct TextureOps {
-    // Upload kPreviewPath into a GPU texture; write its pixel size to *w,*h. Runs on the
-    // UI thread (owns the GL/Vulkan context). Returns false on failure.
-    std::function<bool(const char* path, int* w, int* h)> upload;
+    // Upload kPreviewPath into a GPU texture; write pixel size to *w,*h and fill *hist
+    // from the decoded pixels. Runs on the UI thread (owns the GL/Vulkan context).
+    std::function<bool(const char* path, int* w, int* h, Histogram* hist)> upload;
     // Current texture handle as an ImTextureID (0 / VK_NULL_HANDLE if none yet).
     std::function<ImTextureID()> id;
 };
@@ -404,6 +425,7 @@ struct StudioUI {
     std::string ex_status, status;
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
+    Histogram hist;   // RGB histogram of the current preview
     // engine
     Daemon daemon;
     std::unique_ptr<JobSystem> js;
@@ -439,6 +461,36 @@ struct StudioUI {
         Task t = make_task(Task::Export);
         t.all = all; t.fmt_idx = ex_fmt_idx; t.tier_idx = ex_tier_idx; t.brand = ex_brand;
         js->submit(t);
+    }
+
+    // RGB histogram (3 channels overlaid, additive translucent bars).
+    void draw_histogram() {
+        ImGui::SeparatorText("Histogram");
+        if (!hist.valid) { ImGui::TextDisabled("(chua co anh)"); return; }
+        ImVec2 sz(ImGui::GetContentRegionAvail().x, 100.f);
+        ImVec2 p = ImGui::GetCursorScreenPos();
+        ImVec2 e(p.x + sz.x, p.y + sz.y);
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(p, e, IM_COL32(10, 10, 12, 255));
+        for (int k = 1; k < 4; k++) {                          // quarter gridlines
+            float x = p.x + sz.x * k / 4.f;
+            dl->AddLine(ImVec2(x, p.y), ImVec2(x, e.y), IM_COL32(38, 38, 42, 255));
+        }
+        // sqrt scale so the distribution reads like a real photo histogram (tall spikes
+        // don't flatten everything else).
+        auto plot = [&](const float* hbin, ImU32 col) {
+            for (int i = 0; i < kHistBins; i++) {
+                float v = std::sqrt(hbin[i] / hist.maxv);
+                float x0 = p.x + sz.x * i / kHistBins;
+                float x1 = p.x + sz.x * (i + 1) / kHistBins;
+                dl->AddRectFilled(ImVec2(x0, p.y + sz.y * (1.f - v)), ImVec2(x1, e.y), col);
+            }
+        };
+        plot(hist.r, IM_COL32(255, 70, 70, 115));
+        plot(hist.g, IM_COL32(70, 225, 110, 115));
+        plot(hist.b, IM_COL32(90, 140, 255, 115));
+        dl->AddRect(p, e, IM_COL32(70, 70, 74, 255));
+        ImGui::Dummy(sz);
     }
 
     // Draw the whole UI for one frame. Call between ImGui::NewFrame() and ImGui::Render().
@@ -477,6 +529,8 @@ struct StudioUI {
         ImGui::SliderFloat("contrast",   &contrast,   -1.f, 1.f, "%.2f");
         ImGui::SliderFloat("shadows",    &shadows,    -1.f, 1.f, "%.2f");
         ImGui::SliderFloat("highlights", &highlights, -1.f, 1.f, "%.2f");
+
+        draw_histogram();
 
         ImGui::SeparatorText("Preset"); ImGui::SetNextItemWidth(-1);
         ImGui::Combo("##preset", &preset_idx, kPresets, IM_ARRAYSIZE(kPresets));
@@ -560,7 +614,7 @@ struct StudioUI {
         }
         if (need_upload) {
             int w = 0, h = 0;
-            if (ops.upload(kPreviewPath, &w, &h)) {
+            if (ops.upload(kPreviewPath, &w, &h, &hist)) {
                 tex_w = w; tex_h = h; has_tex = true;
                 char dim[48]; std::snprintf(dim, sizeof(dim), " [%dx%d]", w, h);
                 status = preview_log + dim;

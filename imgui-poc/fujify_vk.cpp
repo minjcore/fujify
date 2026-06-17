@@ -192,10 +192,11 @@ static void vk_destroy_texture(VkTexture& t) {
     if (t.mem) { vkFreeMemory(g_Device, t.mem, g_Allocator); t.mem = VK_NULL_HANDLE; }
 }
 
-static bool vk_upload_texture_from_file(const char* path, VkTexture& t) {
+static bool vk_upload_texture_from_file(const char* path, VkTexture& t, Histogram* hist) {
     int w, h, n;
     unsigned char* pixels = stbi_load(path, &w, &h, &n, 4);
     if (!pixels) return false;
+    if (hist) compute_histogram(pixels, w, h, hist);
     VkDeviceSize size = (VkDeviceSize)w * h * 4;
 
     vkDeviceWaitIdle(g_Device);
@@ -326,8 +327,8 @@ int main(int, char**) {
     // ---- backend texture ops + shared UI ----
     VkTexture tex;
     TextureOps ops;
-    ops.upload = [&](const char* p, int* ow, int* oh) {
-        if (!vk_upload_texture_from_file(p, tex)) return false;
+    ops.upload = [&](const char* p, int* ow, int* oh, Histogram* hist) {
+        if (!vk_upload_texture_from_file(p, tex, hist)) return false;
         *ow = tex.w; *oh = tex.h; return true;
     };
     ops.id = [&]() { return (ImTextureID)(uintptr_t)tex.ds; };
