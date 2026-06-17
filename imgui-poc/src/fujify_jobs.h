@@ -85,7 +85,7 @@ private:
                               "_" + std::to_string(t.target_kb) + "kb.jpg";
             EngineResult er = engine_run(*dmn, build_json("save_target", t.input, out.c_str(), 0,
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], t.target_kb, t.crop, t.rotate));
-            r.ok = er.ok;
+            r.ok = er.ok; if (er.ok) r.path = out;
             r.log = er.ok ? ("Saved → " + out + "\n" + er.log) : ("Loi save:\n" + er.log);
         } else if (t.kind == Task::Upload) {            // render full-res → PUT to cloud
             EngineResult rf = engine_run(*dmn, build_json("full", t.input, kFullPath, 0,
@@ -120,10 +120,17 @@ private:
             r.path = er.ok ? out : "";
             r.log = er.ok ? ("Downloaded " + base) : ("Download: " + er.log);
         } else if (is_video(t.input)) {                 // video → ffmpeg look export
-            std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
+            std::string out;
+            if (is_stream_url(t.input)) {               // stream has no local dir → ~/Downloads
+                const char* home = getenv("HOME");
+                std::string dir = home ? std::string(home) + "/Downloads" : std::string("/tmp");
+                out = dir + "/fujify_stream.mp4";
+            } else {
+                out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
+            }
             EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]));
-            r.ok = er.ok;
+            r.ok = er.ok; if (er.ok) r.path = out;
             r.log = er.ok ? ("Exported video (" + std::to_string(er.elapsed_ms) + " ms)\n- " + out)
                           : ("Loi video export:\n" + er.log);
         } else {
@@ -138,7 +145,7 @@ private:
                 for (int i = lo; i < hi; ++i) {
                     std::string out = dir + "/" + stem + "_" + kFormats[i] + "_" + kTiers[t.tier_idx] + ".jpg";
                     EngineResult er = engine_run(*dmn, build_social_json(kFullPath, out, kFormats[i], kTiers[t.tier_idx], t.brand));
-                    if (er.ok) { n_ok++; oks += "\n- " + out; }
+                    if (er.ok) { n_ok++; oks += "\n- " + out; if (r.path.empty()) r.path = out; }
                     else errs += std::string("\n[") + kFormats[i] + "] " + er.log;
                 }
             }

@@ -102,7 +102,7 @@ struct StudioUI {
     int   target_kb = 500;       // save-to-target-size
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
-    std::string ex_status, status;
+    std::string ex_status, status, ex_path;   // ex_path: last exported/saved file → click to reveal in Finder
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -312,7 +312,8 @@ struct StudioUI {
 
         ImGui::TextUnformatted("Input");
         ImGui::SetNextItemWidth(-90);
-        ImGui::InputText("##path", input_path, IM_ARRAYSIZE(input_path));
+        bool path_enter = ImGui::InputText("##path", input_path, IM_ARRAYSIZE(input_path),
+                                           ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::SameLine();
         if (ImGui::Button("Browse...", ImVec2(-1, 0))) {
             std::string f = pick_file();
@@ -321,6 +322,8 @@ struct StudioUI {
                 start_process();
             }
         }
+        if (path_enter) start_process();   // paste a file path OR stream URL (m3u8/http) + Enter
+        ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
         draw_recents();
 
         ImGui::SeparatorText("White balance");
@@ -402,6 +405,15 @@ struct StudioUI {
             ImGui::EndDisabled();
         }
         if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
+        if (!ex_path.empty()) {                          // saved/exported file → reveal in Finder
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.70f, 1.f, 1.f));
+            ImGui::Text(u8"📂 %s", path_stem(ex_path).c_str());
+            ImGui::PopStyleColor();
+            if (ImGui::IsItemHovered()) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+            if (ImGui::IsItemClicked()) reveal_in_finder(ex_path);
+            ImGui::SameLine();
+            if (ImGui::SmallButton(u8"Mở thư mục")) reveal_in_finder(ex_path);
+        }
 
         ImGui::SeparatorText(u8"Cloud ☁");
         if (cloud_token.empty()) {
@@ -531,7 +543,8 @@ struct StudioUI {
                     std::snprintf(input_path, sizeof(input_path), "%s", r.path.c_str());
                     start_process();   // open the downloaded image
                 }
-            } else if (r.kind == Task::Export) ex_status = r.log;
+            } else if (r.kind == Task::Export) { ex_status = r.log; if (r.ok && !r.path.empty()) ex_path = r.path; }
+            else if (r.kind == Task::SaveTarget) { status = r.log; if (r.ok && !r.path.empty()) ex_path = r.path; }
             else { status = r.log; if (r.reload_texture && r.ok) { need_upload = true; preview_log = r.log; } }
         }
         if (need_upload) {

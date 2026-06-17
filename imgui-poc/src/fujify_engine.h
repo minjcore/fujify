@@ -224,6 +224,15 @@ static inline std::string pick_file() {
     return out;
 }
 
+// Reveal a file in Finder (selects it); falls back to opening its folder. Async (& + nohup-free).
+static inline void reveal_in_finder(const std::string& path) {
+    if (path.empty()) return;
+    std::string esc;                       // single-quote escape for the shell
+    for (char c : path) { if (c == '\'') esc += "'\\''"; else esc += c; }
+    std::string cmd = "open -R '" + esc + "' >/dev/null 2>&1 &";
+    std::system(cmd.c_str());
+}
+
 // Path helpers — export lands next to the source image (writable on any machine).
 static inline std::string path_dir(const std::string& p) {
     auto s = p.find_last_of('/');
@@ -235,7 +244,14 @@ static inline std::string path_stem(const std::string& p) {
     auto d = b.find_last_of('.');
     return d == std::string::npos ? b : b.substr(0, d);
 }
+// A network stream URL (HLS .m3u8, progressive http, RTMP/RTSP…) — handled as video.
+static inline bool is_stream_url(const std::string& p) {
+    return p.rfind("http://", 0) == 0 || p.rfind("https://", 0) == 0 ||
+           p.rfind("rtmp://", 0) == 0 || p.rfind("rtmps://", 0) == 0 ||
+           p.rfind("rtsp://", 0) == 0 || p.rfind("udp://", 0) == 0 || p.rfind("tcp://", 0) == 0;
+}
 static inline bool is_video(const std::string& p) {
+    if (is_stream_url(p)) return true;
     auto d = p.find_last_of('.');
     if (d == std::string::npos) return false;
     std::string e = p.substr(d);

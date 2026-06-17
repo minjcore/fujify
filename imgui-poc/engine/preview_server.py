@@ -84,22 +84,33 @@ VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
 _cache: dict = {}
 
 
+def _is_url(path) -> bool:
+    """A network source ffmpeg can open directly (HLS .m3u8, progressive http, RTMP/RTSP…)."""
+    return str(path).lower().startswith(
+        ("http://", "https://", "rtmp://", "rtmps://", "rtsp://", "udp://", "tcp://"))
+
+
 def _is_video(path) -> bool:
+    if _is_url(path):
+        return True   # any network stream is handled by the ffmpeg video path
     return Path(path).suffix.lower() in VIDEO_EXTS
 
 
 def _video_frame(path: str) -> str:
-    """Extract a representative frame from a video → temp JPEG, return its path (cached)."""
-    p = Path(path).expanduser().resolve()
-    out = Path(tempfile.gettempdir()) / f"fujify_vframe_{abs(hash((str(p), p.stat().st_mtime)))}.jpg"
+    """Extract a representative frame from a video/stream → temp JPEG, return its path (cached)."""
+    if _is_url(path):                        # network stream: ffmpeg opens the URL directly
+        src, key = str(path), abs(hash(str(path)))
+    else:
+        p = Path(path).expanduser().resolve()
+        src, key = str(p), abs(hash((str(p), p.stat().st_mtime)))
+    out = Path(tempfile.gettempdir()) / f"fujify_vframe_{key}.jpg"
     if not out.exists():
-        # seek ~1s in; fall back to first frame if shorter
-        cmd = [FFMPEG, "-y", "-ss", "1", "-i", str(p), "-frames:v", "1",
-               "-q:v", "2", str(out)]
-        r = subprocess.run(cmd, capture_output=True)
+        # seek ~1s in; fall back to first frame if shorter / live stream
+        cmd = [FFMPEG, "-y", "-ss", "1", "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
+        r = subprocess.run(cmd, capture_output=True, timeout=60)
         if r.returncode != 0 or not out.exists():
-            cmd = [FFMPEG, "-y", "-i", str(p), "-frames:v", "1", "-q:v", "2", str(out)]
-            r = subprocess.run(cmd, capture_output=True)
+            cmd = [FFMPEG, "-y", "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
+            r = subprocess.run(cmd, capture_output=True, timeout=60)
             if r.returncode != 0:
                 raise PreviewError(ERR_DECODE_FAILED,
                                    "ffmpeg frame extract failed: " + r.stderr.decode("utf-8", "ignore")[-200:])
@@ -143,10 +154,15 @@ def _build_lut(s, size: int = 33) -> str:
 
 def _video_export(req: dict) -> dict:
     t0 = perf_counter()
-    src = Path(req["input_path"]).expanduser().resolve()
+    raw_in = req["input_path"]
+    if _is_url(raw_in):                      # stream URL → ffmpeg reads it directly
+        src = raw_in
+    else:
+        p = Path(raw_in).expanduser().resolve()
+        if not p.is_file():
+            raise PreviewError(ERR_FILE_NOT_FOUND, f"not found: {p}")
+        src = str(p)
     out = Path(req["output_path"]).expanduser().resolve()
-    if not src.is_file():
-        raise PreviewError(ERR_FILE_NOT_FOUND, f"not found: {src}")
     r = ProcessImageRequest(input_path=str(src), preset=req.get("preset") or None,
                             settings=req.get("settings") or None)
     s = _effective_settings(r)
