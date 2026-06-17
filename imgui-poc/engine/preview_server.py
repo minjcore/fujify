@@ -109,6 +109,30 @@ def _ffmpeg_look_filters(s) -> str:
     return ",".join(parts)
 
 
+def _build_lut(s, size: int = 33) -> str:
+    """Bake the engine's exact WB+tone transform into a 3D .cube LUT (identity grid →
+    apply_white_balance + apply_tone). Image-dependent steps (auto WB / pick) are off, so
+    the LUT captures the manual/preset look exactly — same color science as the photo path."""
+    ramp = np.linspace(0.0, 1.0, size)
+    idx = np.arange(size ** 3)
+    ri, gi, bi = idx % size, (idx // size) % size, (idx // (size * size)) % size   # R fastest
+    grid = np.stack([ramp[ri], ramp[gi], ramp[bi]], axis=1).reshape(size ** 3, 1, 3)
+    wb = WhiteBalanceSettings(
+        temp=s.temp, tint=float(s.tint),
+        wb_shift_a=float(s.wb_shift_a), wb_shift_b=float(s.wb_shift_b),
+        wb_shift_g=float(s.wb_shift_g), wb_shift_m=float(s.wb_shift_m),
+        auto_gray_world=False, pick_xy=None, pick_radius=int(s.wb_pick_radius))
+    tone = ToneSettings(brightness=float(s.brightness), contrast=float(s.contrast),
+                        shadows=float(s.shadows), highlights=float(s.highlights))
+    out = np.clip(apply_tone(apply_white_balance(grid, wb), tone), 0.0, 1.0).reshape(size ** 3, 3)
+    path = str(Path(tempfile.gettempdir()) / "fujify_look.cube")
+    with open(path, "w") as f:
+        f.write(f"LUT_3D_SIZE {size}\n")
+        for px in out:
+            f.write(f"{px[0]:.6f} {px[1]:.6f} {px[2]:.6f}\n")
+    return path
+
+
 def _video_export(req: dict) -> dict:
     t0 = perf_counter()
     src = Path(req["input_path"]).expanduser().resolve()
@@ -118,7 +142,11 @@ def _video_export(req: dict) -> dict:
     r = ProcessImageRequest(input_path=str(src), preset=req.get("preset") or None,
                             settings=req.get("settings") or None)
     s = _effective_settings(r)
-    vf = _ffmpeg_look_filters(s)
+    # Exact look via a baked 3D LUT; fall back to approximate ffmpeg filters if it fails.
+    try:
+        vf = "lut3d=" + _build_lut(s)
+    except Exception:
+        vf = _ffmpeg_look_filters(s)
     cmd = [FFMPEG, "-y", "-i", str(src), "-vf", vf,
            "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p",
            "-c:a", "copy", str(out)]

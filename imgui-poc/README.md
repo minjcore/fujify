@@ -165,12 +165,14 @@ Download ở `fujify.app` trỏ `cdn.fujify.app/download/...`.
 ## Video (Studio)
 
 Studio mở luôn **video** (`.mp4/.mov/.m4v/...`): engine trích 1 frame qua **ffmpeg** để
-preview + chỉnh look (temp/brightness/contrast) như ảnh; nút **Export video (.mp4)** áp look
-cho cả clip bằng ffmpeg (`colortemperature` + `eq`) → `<tên>_fujify.mp4` cạnh file gốc.
+preview + chỉnh look như ảnh; nút **Export video (.mp4)** áp look cho cả clip → `<tên>_fujify.mp4`
+cạnh file gốc.
 
-- Cần **ffmpeg** trên máy (engine tự tìm `ffmpeg-full` rồi tới `ffmpeg` trong PATH; override
-  bằng env `FUJIFY_FFMPEG`). Bản brew `ffmpeg` mặc định trên máy này đang lỗi dylib → dùng `ffmpeg-full`.
-- Look video là **xấp xỉ** (filter ffmpeg), không phải color science y hệt engine ảnh — v1.
+- **Look khớp chính xác**: engine bake **3D LUT (.cube)** từ chính `apply_white_balance` +
+  `apply_tone` (đẩy lưới identity RGB 33³ qua engine) rồi ffmpeg `lut3d` áp lên video — cùng
+  color science với đường ảnh, nên video = preview. Fallback `colortemperature`+`eq` nếu LUT lỗi.
+  (Auto-WB/pick phụ thuộc ảnh → không vào LUT; look thủ công/preset thì exact.)
+- Cần **ffmpeg** trên máy (engine tự tìm `ffmpeg-full` → `ffmpeg` trong PATH; override env `FUJIFY_FFMPEG`).
 
 ## Hạn chế POC (chưa làm)
 
