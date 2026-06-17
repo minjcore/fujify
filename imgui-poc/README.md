@@ -7,7 +7,6 @@ Backend: **GLFW + OpenGL3**.
 
 ```bash
 brew install glfw
-git clone --depth 1 https://github.com/ocornut/imgui vendor/imgui   # vendored, gitignored
 make
 ./imgui_poc
 ```
