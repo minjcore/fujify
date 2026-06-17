@@ -46,7 +46,9 @@ PLIST
 
 echo "==> bundle Python engine (PyInstaller onedir)"
 ENGINE_SRC="engine-dist/fujify-engine"
-if [ ! -x "$ENGINE_SRC/fujify-engine" ]; then
+# Refreeze when the frozen binary is missing OR the engine source is newer (stale cache
+# silently shipped an old engine before — e.g. a build predating the rotate feature).
+if [ ! -x "$ENGINE_SRC/fujify-engine" ] || [ engine/preview_server.py -nt "$ENGINE_SRC/fujify-engine" ]; then
   ( cd .. && python3 -m PyInstaller --noconfirm --onedir --name fujify-engine \
       --paths . --collect-all rawpy --collect-submodules core \
       --distpath imgui-poc/engine-dist --workpath /tmp/fujify-pyi --specpath /tmp/fujify-pyi \
