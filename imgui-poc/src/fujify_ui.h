@@ -2,6 +2,7 @@
 #pragma once
 #include "imgui.h"
 #include "fujify_jobs.h"
+#include <future>
 
 // ---- fonts --------------------------------------------------------------
 
@@ -103,6 +104,7 @@ struct StudioUI {
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
     std::string ex_status, status, ex_path;   // ex_path: last exported/saved file → click to reveal in Finder
+    std::future<std::string> pick_fut;         // async file chooser (so the dialog never blocks the UI)
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -315,13 +317,11 @@ struct StudioUI {
         bool path_enter = ImGui::InputText("##path", input_path, IM_ARRAYSIZE(input_path),
                                            ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::SameLine();
-        if (ImGui::Button("Browse...", ImVec2(-1, 0))) {
-            std::string f = pick_file();
-            if (!f.empty()) {
-                std::snprintf(input_path, sizeof(input_path), "%s", f.c_str());
-                start_process();
-            }
-        }
+        bool picking = pick_fut.valid();
+        ImGui::BeginDisabled(picking);
+        if (ImGui::Button(picking ? "Dang mo..." : "Browse...", ImVec2(-1, 0)))
+            pick_fut = std::async(std::launch::async, pick_file);   // off the UI thread → no freeze
+        ImGui::EndDisabled();
         if (path_enter) start_process();   // paste a file path OR stream URL (m3u8/http) + Enter
         ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
         draw_recents();
@@ -521,6 +521,13 @@ struct StudioUI {
             ImGui::TextUnformatted("Chua co anh. Nhan 'Load / Apply'.");
         }
         ImGui::End();
+
+        // ---- async file chooser finished? (UI thread reads the picked path) ----
+        if (pick_fut.valid() &&
+            pick_fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            std::string f = pick_fut.get();
+            if (!f.empty()) { std::snprintf(input_path, sizeof(input_path), "%s", f.c_str()); start_process(); }
+        }
 
         // ---- drain finished jobs (UI thread owns the graphics context) ----
         Result r; bool need_upload = false; std::string preview_log;
