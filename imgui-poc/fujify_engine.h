@@ -167,6 +167,21 @@ static inline std::string build_social_json(const std::string& src, const std::s
     return buf;
 }
 
+// Native macOS open dialog via osascript (no extra framework). Returns "" on cancel.
+static inline std::string pick_file() {
+    const char* cmd =
+        "osascript -e 'try' "
+        "-e 'POSIX path of (choose file with prompt \"Chon anh RAW / JPEG\")' "
+        "-e 'end try' 2>/dev/null";
+    FILE* p = popen(cmd, "r");
+    if (!p) return "";
+    char buf[4096]; std::string out;
+    if (std::fgets(buf, sizeof(buf), p)) out = buf;
+    pclose(p);
+    while (!out.empty() && (out.back() == '\n' || out.back() == '\r')) out.pop_back();
+    return out;
+}
+
 // Path helpers — export lands next to the source image (writable on any machine).
 static inline std::string path_dir(const std::string& p) {
     auto s = p.find_last_of('/');
@@ -438,8 +453,17 @@ struct StudioUI {
         ImGui::TextDisabled(u8"写真編集（RAW/JPEG）。ストレージと広告は収益機能、プレミアムで広告オフ。");
         ImGui::Separator();
 
-        ImGui::TextUnformatted("Input"); ImGui::SetNextItemWidth(-1);
+        ImGui::TextUnformatted("Input");
+        ImGui::SetNextItemWidth(-90);
         ImGui::InputText("##path", input_path, IM_ARRAYSIZE(input_path));
+        ImGui::SameLine();
+        if (ImGui::Button("Browse...", ImVec2(-1, 0))) {
+            std::string f = pick_file();
+            if (!f.empty()) {
+                std::snprintf(input_path, sizeof(input_path), "%s", f.c_str());
+                start_process();
+            }
+        }
 
         ImGui::SeparatorText("White balance");
         ImGui::Checkbox("Set temp (K)", &use_temp);
