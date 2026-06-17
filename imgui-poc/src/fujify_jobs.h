@@ -16,6 +16,7 @@ struct Task {
     bool  all = false; int fmt_idx = 0, tier_idx = 0; bool brand = true;  // export-only
     int   target_kb = 500;                                                // save-target-only
     float crop[4] = {0.f, 0.f, 1.f, 1.f};                                 // normalized crop rect
+    int   rotate = 0;                                                     // CW degrees 0/90/180/270
     std::string token;                                                    // upload/library
     std::string email, password; bool signup = false;                     // auth-only
     std::string lib_key;                                                  // library_get-only
@@ -74,7 +75,7 @@ private:
         Result r; r.kind = t.kind;
         if (t.kind == Task::Preview) {
             std::string req = build_json("preview", t.input, kPreviewPath, kProxyMaxDim,
-                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop);
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop, t.rotate);
             EngineResult er = engine_run(*dmn, req);
             r.ok = er.ok; r.ms = er.elapsed_ms; r.reload_texture = er.ok;
             r.log = er.ok ? ("OK — engine " + std::to_string(er.elapsed_ms) + " ms (proxy)")
@@ -83,12 +84,12 @@ private:
             std::string out = path_dir(t.input) + "/" + path_stem(t.input) +
                               "_" + std::to_string(t.target_kb) + "kb.jpg";
             EngineResult er = engine_run(*dmn, build_json("save_target", t.input, out.c_str(), 0,
-                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], t.target_kb, t.crop));
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], t.target_kb, t.crop, t.rotate));
             r.ok = er.ok;
             r.log = er.ok ? ("Saved → " + out + "\n" + er.log) : ("Loi save:\n" + er.log);
         } else if (t.kind == Task::Upload) {            // render full-res → PUT to cloud
             EngineResult rf = engine_run(*dmn, build_json("full", t.input, kFullPath, 0,
-                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop));
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop, t.rotate));
             if (!rf.ok) { r.ok = false; r.log = "Loi render:\n" + rf.log; }
             else {
                 EngineResult er = engine_run(*dmn, build_upload_json(kFullPath, path_stem(t.input) + ".jpg", t.token));
@@ -127,7 +128,7 @@ private:
                           : ("Loi video export:\n" + er.log);
         } else {
             std::string fullreq = build_json("full", t.input, kFullPath, 0,
-                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]);
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop, t.rotate);
             EngineResult rf = engine_run(*dmn, fullreq);
             std::string oks, errs; int n_ok = 0;
             if (!rf.ok) { errs = "\nfull-res: " + rf.log; }

@@ -106,6 +106,7 @@ struct StudioUI {
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
+    int   rotate = 0;   // CW degrees 0/90/180/270
     Histogram hist;   // RGB histogram of the current preview
     std::vector<std::string> recents;   // recently opened images (persisted)
     std::vector<EditState> snaps;       // saved looks (in-memory, this session)
@@ -144,6 +145,7 @@ struct StudioUI {
         if (!crop_mode) {   // while selecting, show full image; otherwise apply the crop
             t.crop[0] = crop_x0; t.crop[1] = crop_y0; t.crop[2] = crop_x1; t.crop[3] = crop_y1;
         }
+        t.rotate = rotate;
         return t;
     }
     void start_process() {
@@ -450,6 +452,16 @@ struct StudioUI {
             ImGui::SameLine(); if (ImGui::SmallButton("100%")) { zoom = (fit > 0 ? 1.f / fit : 1.f); pan = ImVec2(0, 0); }
             ImGui::SameLine(); ImGui::SetNextItemWidth(130);
             ImGui::SliderFloat("##zoom", &zoom, 0.1f, 8.0f, "zoom %.2fx");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("⟲")) {   // rotate 90° CCW — crop rect no longer maps, reset it
+                rotate = (rotate + 270) % 360; crop_x0 = crop_y0 = 0.f; crop_x1 = crop_y1 = 1.f;
+                zoom = 1.f; pan = ImVec2(0, 0); start_process();
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("⟳")) {   // rotate 90° CW
+                rotate = (rotate + 90) % 360; crop_x0 = crop_y0 = 0.f; crop_x1 = crop_y1 = 1.f;
+                zoom = 1.f; pan = ImVec2(0, 0); start_process();
+            }
             ImGui::SameLine();
             if (ImGui::Checkbox("Crop", &crop_mode)) { zoom = 1.f; pan = ImVec2(0, 0); start_process(); }
             if (crop_mode) {

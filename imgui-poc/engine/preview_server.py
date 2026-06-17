@@ -213,6 +213,14 @@ def _wb_tone(req: dict):
     return wb, tone
 
 
+def _apply_rotate(rgb, req):
+    """Rotate rgb clockwise by req['rotate'] degrees (0/90/180/270)."""
+    deg = int(req.get("rotate", 0)) % 360
+    if deg == 0:
+        return rgb
+    return np.ascontiguousarray(np.rot90(rgb, k=(4 - deg // 90) % 4))
+
+
 def _apply_crop(rgb, req):
     """Crop rgb to the normalized rect req['crop'] = [x0,y0,x1,y1] (0..1). No-op if full."""
     c = req.get("crop")
@@ -236,9 +244,9 @@ def _load_rgb(mode: str, req: dict):
             path = _video_frame(path)
         if mode == "full":
             loaded = load_image(Path(path).expanduser().resolve())
-            return _apply_crop(loaded.rgb, req), loaded.exif_bytes
+            return _apply_crop(_apply_rotate(loaded.rgb, req), req), loaded.exif_bytes
         rgb, exif = _proxy_for(path, int(req.get("max_dim", 1600)))
-        return _apply_crop(rgb, req), exif
+        return _apply_crop(_apply_rotate(rgb, req), req), exif
     except FileNotFoundError as exc:
         raise PreviewError(ERR_FILE_NOT_FOUND, str(exc)) from exc
     except PreviewError:

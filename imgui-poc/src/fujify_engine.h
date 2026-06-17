@@ -103,10 +103,11 @@ static inline void stop_daemon(Daemon& d) {
 static inline std::string build_json(const char* mode, const std::string& in, const char* out, int max_dim,
                                      bool use_temp, float temp, float tint, bool wb_auto,
                                      float br, float co, float sh, float hi, const char* preset,
-                                     int target_kb = 0, const float* crop = nullptr) {
+                                     int target_kb = 0, const float* crop = nullptr, int rotate = 0) {
     std::string extra;
     if (preset && preset[0]) extra += std::string("\"preset\":\"") + preset + "\",";
     if (target_kb > 0) extra += "\"target_kb\":" + std::to_string(target_kb) + ",";
+    if (rotate % 360 != 0) extra += "\"rotate\":" + std::to_string(((rotate % 360) + 360) % 360) + ",";
     if (crop && !(crop[0] == 0.f && crop[1] == 0.f && crop[2] == 1.f && crop[3] == 1.f)) {
         char cb[96];
         std::snprintf(cb, sizeof(cb), "\"crop\":[%.4f,%.4f,%.4f,%.4f],", crop[0], crop[1], crop[2], crop[3]);
