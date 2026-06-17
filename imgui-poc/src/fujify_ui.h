@@ -126,6 +126,7 @@ struct StudioUI {
         js.reset(new JobSystem(&daemon));   // starts the single consumer thread
         load_recents();
         load_session();
+        if (!cloud_token.empty()) start_lib_list();   // already signed in → show library
         start_process();                    // auto-load on launch
     }
 
