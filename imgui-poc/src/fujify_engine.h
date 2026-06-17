@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -80,7 +81,7 @@ static inline Daemon start_daemon() {
             execl(eng, eng, (char*)nullptr);         // serve loop on stdin/stdout
         } else {                                     // dev: source tree + system python3
             if (chdir(FUJIFY_ROOT) == 0)
-                execlp("python3", "python3", "-u", "imgui-poc/preview_server.py", (char*)nullptr);
+                execlp("python3", "python3", "-u", "imgui-poc/engine/preview_server.py", (char*)nullptr);
         }
         _exit(127);                      // exec failed
     }
@@ -210,7 +211,7 @@ static inline void setup_fonts() {
     bb.BuildRanges(&latin);
 
     const char* inter[] = {
-        FUJIFY_ROOT "/imgui-poc/fonts/Inter-Regular.otf",
+        FUJIFY_ROOT "/imgui-poc/assets/fonts/Inter-Regular.otf",
         "/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home/lib/fonts/Inter-Regular.otf",
         "/Applications/Android Studio.app/Contents/jbr/Contents/Home/lib/fonts/Inter-Regular.otf",
     };
@@ -426,6 +427,7 @@ struct StudioUI {
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     Histogram hist;   // RGB histogram of the current preview
+    std::vector<std::string> recents;   // recently opened images (persisted)
     // engine
     Daemon daemon;
     std::unique_ptr<JobSystem> js;
@@ -437,10 +439,11 @@ struct StudioUI {
         fujify_bundle_autoconfig();   // sets FUJIFY_ENGINE / FUJIFY_SAMPLE if running from .app
         const char* sample = getenv("FUJIFY_SAMPLE");   // bundled sample path
         if (sample && sample[0]) std::snprintf(input_path, sizeof(input_path), "%s", sample);
-        else std::snprintf(input_path, sizeof(input_path), "%s/imgui-poc/sample.ARW", FUJIFY_ROOT);
+        else std::snprintf(input_path, sizeof(input_path), "%s/imgui-poc/assets/sample.ARW", FUJIFY_ROOT);
         status = std::string("Dang tu dong load sample.ARW... (") + backend + ")";
         daemon = start_daemon();
         js.reset(new JobSystem(&daemon));   // starts the single consumer thread
+        load_recents();
         start_process();                    // auto-load on launch
     }
 
@@ -456,11 +459,61 @@ struct StudioUI {
         t.br = brightness; t.co = contrast; t.sh = shadows; t.hi = highlights; t.preset = preset_idx;
         return t;
     }
-    void start_process() { js->submit(make_task(Task::Preview)); }
+    void start_process() {
+        if (recents.empty() || recents.front() != input_path) add_recent(input_path);
+        js->submit(make_task(Task::Preview));
+    }
     void start_export(bool all) {
         Task t = make_task(Task::Export);
         t.all = all; t.fmt_idx = ex_fmt_idx; t.tier_idx = ex_tier_idx; t.brand = ex_brand;
         js->submit(t);
+    }
+
+    // ---- recents (persisted to ~/.fujify_studio_recents) ----
+    std::string recents_path() {
+        const char* h = getenv("HOME");
+        return std::string(h ? h : "/tmp") + "/.fujify_studio_recents";
+    }
+    void load_recents() {
+        recents.clear();
+        FILE* f = std::fopen(recents_path().c_str(), "r");
+        if (!f) return;
+        char line[1024];
+        while (recents.size() < 8 && std::fgets(line, sizeof(line), f)) {
+            std::string s(line);
+            while (!s.empty() && (s.back() == '\n' || s.back() == '\r')) s.pop_back();
+            if (!s.empty()) recents.push_back(s);
+        }
+        std::fclose(f);
+    }
+    void save_recents() {
+        FILE* f = std::fopen(recents_path().c_str(), "w");
+        if (!f) return;
+        for (auto& s : recents) { std::fputs(s.c_str(), f); std::fputc('\n', f); }
+        std::fclose(f);
+    }
+    void add_recent(const std::string& path) {
+        recents.erase(std::remove(recents.begin(), recents.end(), path), recents.end());
+        recents.insert(recents.begin(), path);
+        if (recents.size() > 8) recents.resize(8);
+        save_recents();
+    }
+    void draw_recents() {
+        if (recents.empty()) return;
+        char hdr[32]; std::snprintf(hdr, sizeof(hdr), "Recents (%d)", (int)recents.size());
+        if (!ImGui::CollapsingHeader(hdr)) return;
+        for (size_t i = 0; i < recents.size(); i++) {
+            const std::string& full = recents[i];
+            auto s = full.find_last_of('/');
+            std::string name = (s == std::string::npos) ? full : full.substr(s + 1);
+            ImGui::PushID((int)i);
+            if (ImGui::Selectable(name.c_str())) {
+                std::snprintf(input_path, sizeof(input_path), "%s", full.c_str());
+                start_process();
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", full.c_str());
+            ImGui::PopID();
+        }
     }
 
     // RGB histogram (3 channels overlaid, additive translucent bars).
@@ -516,6 +569,7 @@ struct StudioUI {
                 start_process();
             }
         }
+        draw_recents();
 
         ImGui::SeparatorText("White balance");
         ImGui::Checkbox("Set temp (K)", &use_temp);

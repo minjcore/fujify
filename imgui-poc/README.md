@@ -6,16 +6,24 @@ Backend: **GLFW + OpenGL3**.
 ## Build & Run
 
 ```bash
-brew install glfw        # dependency duy nhất
+brew install glfw
+git clone --depth 1 https://github.com/ocornut/imgui vendor/imgui   # vendored, gitignored
 make
 ./imgui_poc
 ```
 
 ## Cấu trúc
 
-- `main.cpp`   — vòng lặp app + UI (Control Panel: input, slider, color picker, button, demo toggle)
-- `Makefile`   — build clang++, link GLFW + system frameworks
-- `imgui/`     — Dear ImGui source (git clone, không chỉnh sửa)
+```
+src/      main.cpp · fujify_studio.cpp (GL) · fujify_vk.cpp (Vulkan) · fujify_engine.h (shared)
+vendor/   stb_image.h · imgui/ (clone)
+engine/   preview_server.py (Python engine daemon)
+assets/   fonts/Inter-Regular.otf · sample.ARW (gitignored)
+Makefile · package.sh · notarize.sh   (ở root)
+```
+
+- `src/main.cpp` — POC hello-world ImGui (input, slider, color picker, demo toggle).
+- `src/fujify_engine.h` — `StudioUI` + engine daemon/queue/fonts/histogram/recents (dùng chung GL+VK).
 
 ## Ghi chú
 

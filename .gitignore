@@ -21,11 +21,11 @@ imgui-poc/engine-dist/
 imgui-poc/creative_*.jpg
 
 # Vendored Dear ImGui — clone per imgui-poc/README.md:
-#   git clone --depth 1 https://github.com/ocornut/imgui imgui-poc/imgui
-imgui-poc/imgui/
+#   git clone --depth 1 https://github.com/ocornut/imgui imgui-poc/vendor/imgui
+imgui-poc/vendor/imgui/
 
 # Large / downloaded assets (sample RAW from raw.pixls.us)
-imgui-poc/sample.ARW
+imgui-poc/assets/sample.ARW
 
 # Distributable binaries
 web/download/*.dmg

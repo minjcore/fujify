@@ -1,9 +1,10 @@
-# Dear ImGui POC — macOS (GLFW + OpenGL3)
-EXE      = imgui_poc
-IMGUI_DIR = imgui
+# Dear ImGui POC — macOS (GLFW + OpenGL3 / Vulkan)
+# Layout: src/ (our code) · vendor/ (stb + imgui) · engine/ (python) · assets/
+EXE       = imgui_poc
+IMGUI_DIR = vendor/imgui
 GLFW_DIR  = $(shell brew --prefix glfw)
 
-SOURCES  = main.cpp
+SOURCES  = src/main.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp \
            $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp \
            $(IMGUI_DIR)/imgui_demo.cpp
@@ -16,7 +17,7 @@ OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 FUJIFY_ROOT = $(realpath ..)
 
 CXX      = clang++
-CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(GLFW_DIR)/include
+CXXFLAGS = -std=c++11 -Isrc -Ivendor -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(GLFW_DIR)/include
 CXXFLAGS += -Wall -Wformat -pthread -DFUJIFY_ROOT='"$(FUJIFY_ROOT)"'
 LIBS     = -L$(GLFW_DIR)/lib -lglfw \
            -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
@@ -29,7 +30,7 @@ VK_ICD     = $(VK_MOLTEN)/etc/vulkan/icd.d/MoltenVK_icd.json
 VKFLAGS    = -I$(VK_HEADERS)/include -DMOLTENVK_ICD='"$(VK_ICD)"'
 VKLIBS     = -L$(VK_LOADER)/lib -lvulkan -Wl,-rpath,$(VK_LOADER)/lib
 
-%.o: %.cpp
+%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 %.o: $(IMGUI_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -37,8 +38,7 @@ VKLIBS     = -L$(VK_LOADER)/lib -lvulkan -Wl,-rpath,$(VK_LOADER)/lib
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # Rebuild app objects when the shared header changes (pattern rule omits this prereq).
-fujify_studio.o: fujify_studio.cpp fujify_engine.h
-fujify_vk.o: fujify_vk.cpp fujify_engine.h
+fujify_studio.o: src/fujify_studio.cpp src/fujify_engine.h
 
 # Core Dear ImGui objects (backend-agnostic) + GLFW platform backend
 IMGUI_CORE = imgui.o imgui_draw.o imgui_tables.o imgui_widgets.o imgui_demo.o imgui_impl_glfw.o
@@ -56,8 +56,8 @@ fujify: fujify_studio.o $(IMGUI_OBJS)
 	@echo "Build complete -> ./fujify"
 
 # Fuji-fy Studio — Vulkan backend (needs Vulkan headers for these two TUs)
-fujify_vk.o: fujify_vk.cpp
-	$(CXX) $(CXXFLAGS) $(VKFLAGS) -c -o $@ $<
+fujify_vk.o: src/fujify_vk.cpp src/fujify_engine.h
+	$(CXX) $(CXXFLAGS) $(VKFLAGS) -c -o $@ src/fujify_vk.cpp
 imgui_impl_vulkan.o: $(IMGUI_DIR)/backends/imgui_impl_vulkan.cpp
 	$(CXX) $(CXXFLAGS) $(VKFLAGS) -c -o $@ $<
 

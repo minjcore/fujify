@@ -21,7 +21,7 @@ from time import perf_counter
 import numpy as np
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]   # imgui-poc/engine/ → project root
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

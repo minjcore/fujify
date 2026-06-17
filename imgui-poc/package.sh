@@ -46,11 +46,11 @@ if [ ! -x "$ENGINE_SRC/fujify-engine" ]; then
   ( cd .. && python3 -m PyInstaller --noconfirm --onedir --name fujify-engine \
       --paths . --collect-all rawpy --collect-submodules core \
       --distpath imgui-poc/engine-dist --workpath /tmp/fujify-pyi --specpath /tmp/fujify-pyi \
-      imgui-poc/preview_server.py >/tmp/fujify-pyi.log 2>&1 ) \
+      imgui-poc/engine/preview_server.py >/tmp/fujify-pyi.log 2>&1 ) \
     || { echo "engine build failed — see /tmp/fujify-pyi.log"; exit 1; }
 fi
 cp -R "$ENGINE_SRC" "$APP/Contents/Resources/engine"
-[ -f sample.ARW ] && cp sample.ARW "$APP/Contents/Resources/sample.ARW"
+[ -f assets/sample.ARW ] && cp assets/sample.ARW "$APP/Contents/Resources/sample.ARW"
 
 echo "==> bundle + relink GLFW"
 GLFW_REF="$(otool -L "$APP/Contents/MacOS/$BIN" | awk '/libglfw/{print $1; exit}')"
