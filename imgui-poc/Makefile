@@ -19,7 +19,7 @@ FUJIFY_ROOT = $(realpath ..)
 CXX      = clang++
 CXXFLAGS = -std=c++11 -Isrc -Ivendor -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(GLFW_DIR)/include
 CXXFLAGS += -Wall -Wformat -pthread -DFUJIFY_ROOT='"$(FUJIFY_ROOT)"'
-LIBS     = -L$(GLFW_DIR)/lib -lglfw \
+LIBS     = -L$(GLFW_DIR)/lib -lglfw -lsqlite3 \
            -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
 # Vulkan (via MoltenVK on macOS) — headers, loader, and the MoltenVK ICD manifest.

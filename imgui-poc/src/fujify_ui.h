@@ -2,7 +2,6 @@
 #pragma once
 #include "imgui.h"
 #include "fujify_jobs.h"
-#include <map>
 
 // ---- fonts --------------------------------------------------------------
 
@@ -83,6 +82,8 @@ struct EditState {
     int rotate = 0;
 };
 
+#include "fujify_store.h"   // SQLite store (needs the complete EditState above)
+
 struct TextureOps {
     // Upload kPreviewPath into a GPU texture; write pixel size to *w,*h and fill *hist
     // from the decoded pixels. Runs on the UI thread (owns the GL/Vulkan context).
@@ -111,7 +112,7 @@ struct StudioUI {
     std::vector<std::string> grid_files;                                   // ≥2 → contact-sheet preview
     std::vector<std::string> grid_back;                                    // grid to restore on Esc
     int grid_sel = -1; std::string grid_info;                              // single-clicked cell → show info
-    std::map<std::string, EditState> img_states;                           // per-image edits (the "data")
+    StateStore store;                                                      // per-image edits in SQLite
     std::string loaded_path;                                               // image whose state is active now
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
@@ -138,12 +139,17 @@ struct StudioUI {
         js.reset(new JobSystem(&daemon));   // starts the single consumer thread
         load_recents();
         load_session();
+        if (const char* h = getenv("HOME"))           // SQLite store for per-image edits
+            store.open(std::string(h) + "/.fujify_states.db");
+        else store.open("/tmp/.fujify_states.db");
         if (!cloud_token.empty()) start_lib_list();   // already signed in → show library
         loaded_path = input_path;           // track the first image's state
+        EditState e; if (store.load(loaded_path, e)) restore_state(e);   // restore last session's edits
         start_process();                    // auto-load on launch
     }
 
     ~StudioUI() {
+        stash_current();     // persist the active image's edits before exit
         js.reset();          // stop + join the consumer
         stop_daemon(daemon);
     }
@@ -180,8 +186,8 @@ struct StudioUI {
         pu = use_temp; pw = wb_auto; pp = preset_idx;            // sync change-detector (no double-fire)
         pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
     }
-    void stash_current() {                                        // remember the active image's edits
-        if (!loaded_path.empty()) img_states[loaded_path] = capture_state();
+    void stash_current() {                                        // persist the active image's edits
+        if (!loaded_path.empty()) store.save(loaded_path, capture_state());
     }
     // Switch to a single image, preserving the one we leave and restoring the target's edits.
     void switch_to(const std::string& path) {
@@ -189,9 +195,9 @@ struct StudioUI {
         if (loaded_path != path) stash_current();
         loaded_path = path;
         std::snprintf(input_path, sizeof(input_path), "%s", path.c_str());
-        auto it = img_states.find(path);
-        restore_state(it != img_states.end() ? it->second : EditState());   // saved edits, else neutral
-        grid_files.clear(); grid_sel = -1;                       // leaving grid (grid_back kept for Esc)
+        EditState e;
+        restore_state(store.load(path, e) ? e : EditState());     // saved edits, else neutral
+        grid_files.clear(); grid_sel = -1;                        // leaving grid (grid_back kept for Esc)
         start_process(); dirty = false;
     }
     // Open the native chooser (modeless). exts empty → any file; multi → select several.
