@@ -24,8 +24,9 @@ imgui-poc/creative_*.jpg
 #   git clone --depth 1 https://github.com/ocornut/imgui imgui-poc/vendor/imgui
 imgui-poc/vendor/imgui/
 
-# Large / downloaded assets (sample RAW from raw.pixls.us)
+# Large / downloaded / generated assets
 imgui-poc/assets/sample.ARW
+imgui-poc/assets/sample.mp4
 
 # Distributable binaries
 web/download/*.dmg

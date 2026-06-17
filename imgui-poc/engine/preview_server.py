@@ -14,9 +14,31 @@ Reuses core/ so color science stays identical to the CLI/server path.
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from time import perf_counter
+
+
+def _resolve_ffmpeg() -> str:
+    """Pick an ffmpeg that actually runs (the default brew one may be dylib-broken)."""
+    for c in (os.environ.get("FUJIFY_FFMPEG"),
+              "/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg",
+              shutil.which("ffmpeg"), "ffmpeg"):
+        if not c:
+            continue
+        try:
+            if subprocess.run([c, "-version"], capture_output=True).returncode == 0:
+                return c
+        except Exception:
+            pass
+    return "ffmpeg"
+
+
+FFMPEG = _resolve_ffmpeg()
 
 import numpy as np
 from PIL import Image
@@ -48,8 +70,68 @@ from core.share_image import render_social_image  # noqa: E402
 from core.tone import ToneSettings, apply_tone  # noqa: E402
 from core.white_balance import WhiteBalanceSettings, apply_white_balance  # noqa: E402
 
+VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
+
 # Cache only the most recent image (keeps memory to one proxy). Key = (path, mtime, max_dim).
 _cache: dict = {}
+
+
+def _is_video(path) -> bool:
+    return Path(path).suffix.lower() in VIDEO_EXTS
+
+
+def _video_frame(path: str) -> str:
+    """Extract a representative frame from a video → temp JPEG, return its path (cached)."""
+    p = Path(path).expanduser().resolve()
+    out = Path(tempfile.gettempdir()) / f"fujify_vframe_{abs(hash((str(p), p.stat().st_mtime)))}.jpg"
+    if not out.exists():
+        # seek ~1s in; fall back to first frame if shorter
+        cmd = [FFMPEG, "-y", "-ss", "1", "-i", str(p), "-frames:v", "1",
+               "-q:v", "2", str(out)]
+        r = subprocess.run(cmd, capture_output=True)
+        if r.returncode != 0 or not out.exists():
+            cmd = [FFMPEG, "-y", "-i", str(p), "-frames:v", "1", "-q:v", "2", str(out)]
+            r = subprocess.run(cmd, capture_output=True)
+            if r.returncode != 0:
+                raise PreviewError(ERR_DECODE_FAILED,
+                                   "ffmpeg frame extract failed: " + r.stderr.decode("utf-8", "ignore")[-200:])
+    return str(out)
+
+
+def _ffmpeg_look_filters(s) -> str:
+    """Map engine settings → an ffmpeg filter chain (approximate look for video v1)."""
+    parts = []
+    if s.temp:                               # warm/cool toward target Kelvin
+        parts.append(f"colortemperature=temperature={int(s.temp)}:mix=1.0")
+    b = float(s.brightness)                  # eq: brightness -1..1, contrast around 1.0
+    c = max(0.0, 1.0 + float(s.contrast))
+    parts.append(f"eq=brightness={b:.3f}:contrast={c:.3f}:gamma=1.0")
+    return ",".join(parts)
+
+
+def _video_export(req: dict) -> dict:
+    t0 = perf_counter()
+    src = Path(req["input_path"]).expanduser().resolve()
+    out = Path(req["output_path"]).expanduser().resolve()
+    if not src.is_file():
+        raise PreviewError(ERR_FILE_NOT_FOUND, f"not found: {src}")
+    r = ProcessImageRequest(input_path=str(src), preset=req.get("preset") or None,
+                            settings=req.get("settings") or None)
+    s = _effective_settings(r)
+    vf = _ffmpeg_look_filters(s)
+    cmd = [FFMPEG, "-y", "-i", str(src), "-vf", vf,
+           "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p",
+           "-c:a", "copy", str(out)]
+    res = subprocess.run(cmd, capture_output=True)
+    if res.returncode != 0:
+        # retry dropping audio (some inputs have none / incompatible audio)
+        cmd = [FFMPEG, "-y", "-i", str(src), "-vf", vf,
+               "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p", "-an", str(out)]
+        res = subprocess.run(cmd, capture_output=True)
+        if res.returncode != 0:
+            raise PreviewError(ERR_SAVE_FAILED,
+                               "ffmpeg export failed: " + res.stderr.decode("utf-8", "ignore")[-300:])
+    return {"ok": True, "ms": int((perf_counter() - t0) * 1000), "mode": "video_export", "vf": vf}
 
 
 def _downscale(arr: np.ndarray, max_dim: int) -> np.ndarray:
@@ -101,6 +183,8 @@ def _load_rgb(mode: str, req: dict):
     if not path:
         raise PreviewError(ERR_BAD_REQUEST, "missing 'input_path'")
     try:
+        if _is_video(path):                  # video → preview a single extracted frame
+            path = _video_frame(path)
         if mode == "full":
             loaded = load_image(Path(path).expanduser().resolve())
             return loaded.rgb, loaded.exif_bytes
@@ -116,10 +200,13 @@ def _load_rgb(mode: str, req: dict):
 def _handle(req: dict) -> dict:
     t0 = perf_counter()
     mode = req.get("mode", "preview")
-    if mode not in ("preview", "full", "social"):
+    if mode not in ("preview", "full", "social", "video_export"):
         raise PreviewError(ERR_BAD_REQUEST, f"unknown mode '{mode}'")
     if not req.get("output_path"):
         raise PreviewError(ERR_BAD_REQUEST, "missing 'output_path'")
+
+    if mode == "video_export":
+        return _video_export(req)
 
     # Social export: render a share-ready crop from an already-processed full-res JPEG.
     if mode == "social":

@@ -162,6 +162,16 @@ Chưa chạy notarize → DMG vẫn tải/chạy được nhưng lần đầu ph
 DMG lên R2: `cp dist/*.dmg ../web/download/ && node ../web/upload-r2.mjs download` → nút
 Download ở `fujify.app` trỏ `cdn.fujify.app/download/...`.
 
+## Video (Studio)
+
+Studio mở luôn **video** (`.mp4/.mov/.m4v/...`): engine trích 1 frame qua **ffmpeg** để
+preview + chỉnh look (temp/brightness/contrast) như ảnh; nút **Export video (.mp4)** áp look
+cho cả clip bằng ffmpeg (`colortemperature` + `eq`) → `<tên>_fujify.mp4` cạnh file gốc.
+
+- Cần **ffmpeg** trên máy (engine tự tìm `ffmpeg-full` rồi tới `ffmpeg` trong PATH; override
+  bằng env `FUJIFY_FFMPEG`). Bản brew `ffmpeg` mặc định trên máy này đang lỗi dylib → dùng `ffmpeg-full`.
+- Look video là **xấp xỉ** (filter ffmpeg), không phải color science y hệt engine ảnh — v1.
+
 ## Hạn chế POC (chưa làm)
 
 - Queue 1 consumer (daemon serial); chưa có cancel job đang chạy. Hiển thị proxy, export full-res.

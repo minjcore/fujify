@@ -195,6 +195,13 @@ static inline std::string path_stem(const std::string& p) {
     auto d = b.find_last_of('.');
     return d == std::string::npos ? b : b.substr(0, d);
 }
+static inline bool is_video(const std::string& p) {
+    auto d = p.find_last_of('.');
+    if (d == std::string::npos) return false;
+    std::string e = p.substr(d);
+    for (char& c : e) c = (char)tolower((unsigned char)c);
+    return e == ".mp4" || e == ".mov" || e == ".m4v" || e == ".avi" || e == ".mkv" || e == ".webm";
+}
 
 // ---- fonts --------------------------------------------------------------
 
@@ -329,6 +336,13 @@ private:
             r.ok = er.ok; r.ms = er.elapsed_ms; r.reload_texture = er.ok;
             r.log = er.ok ? ("OK — engine " + std::to_string(er.elapsed_ms) + " ms (proxy)")
                           : ("Loi engine:\n" + er.log);
+        } else if (is_video(t.input)) {                 // video → ffmpeg look export
+            std::string out = path_dir(t.input) + "/" + path_stem(t.input) + "_fujify.mp4";
+            EngineResult er = engine_run(*dmn, build_json("video_export", t.input, out.c_str(), 0,
+                t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]));
+            r.ok = er.ok;
+            r.log = er.ok ? ("Exported video (" + std::to_string(er.elapsed_ms) + " ms)\n- " + out)
+                          : ("Loi video export:\n" + er.log);
         } else {
             std::string fullreq = build_json("full", t.input, kFullPath, 0,
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset]);
@@ -610,17 +624,25 @@ struct StudioUI {
         ImGui::Separator();
         ImGui::TextWrapped("%s", status.c_str());
 
-        ImGui::SeparatorText(u8"Export creative 書き出し (IG / Threads)");
         bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy
-        ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
-        ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
-        ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
-        ImGui::TextDisabled("story 9:16 - feed 4:5 - square 1:1 | hq=2560px ig=2048px");
-        ImGui::BeginDisabled(!can_export);
-        if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
-        if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
-        ImGui::EndDisabled();
-        if (!has_tex) ImGui::TextDisabled("(Load anh truoc khi export)");
+        if (is_video(input_path)) {
+            ImGui::SeparatorText(u8"Export video 動画");
+            ImGui::TextDisabled("Ap look (temp/brightness/contrast) qua ffmpeg → .mp4");
+            ImGui::BeginDisabled(!can_export);
+            if (ImGui::Button("Export video (.mp4)", ImVec2(-1, 30))) start_export(false);
+            ImGui::EndDisabled();
+        } else {
+            ImGui::SeparatorText(u8"Export creative 書き出し (IG / Threads)");
+            ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
+            ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
+            ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
+            ImGui::TextDisabled("story 9:16 - feed 4:5 - square 1:1 | hq=2560px ig=2048px");
+            ImGui::BeginDisabled(!can_export);
+            if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
+            if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
+            ImGui::EndDisabled();
+        }
+        if (!has_tex) ImGui::TextDisabled("(Load anh/video truoc khi export)");
         if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
         ImGui::End();
 
