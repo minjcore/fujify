@@ -351,7 +351,7 @@ int main(int, char**) {
     {
         StudioUI ui("Vulkan", ops);   // owns engine state; joins worker + stops daemon on scope exit
         while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
+            glfwWaitEventsTimeout(ui.frame_timeout());   // sleep when idle instead of spinning 60fps
             int fbw, fbh; glfwGetFramebufferSize(window, &fbw, &fbh);
             if (fbw > 0 && fbh > 0 && (g_SwapChainRebuild || wd->Width != fbw || wd->Height != fbh)) {
                 ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);

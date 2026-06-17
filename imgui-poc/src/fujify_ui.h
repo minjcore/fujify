@@ -2,7 +2,6 @@
 #pragma once
 #include "imgui.h"
 #include "fujify_jobs.h"
-#include <future>
 
 // ---- fonts --------------------------------------------------------------
 
@@ -104,7 +103,7 @@ struct StudioUI {
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
     std::string ex_status, status, ex_path;   // ex_path: last exported/saved file → click to reveal in Finder
-    std::future<std::string> pick_fut;         // async file chooser (so the dialog never blocks the UI)
+    bool pick_pending = false, pick_ready = false; std::string pick_path;  // native chooser (modeless, non-blocking)
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -300,6 +299,17 @@ struct StudioUI {
         ImGui::Dummy(sz);
     }
 
+    // How long the main loop may sleep waiting for input before the next frame.
+    // The render loop is otherwise a 60fps spin that pins a core on weak machines —
+    // so we only run flat-out when there's a reason to (jobs in flight, live-preview
+    // countdown). A file dialog is open → barely redraw; idle → ~30fps.
+    double frame_timeout() const {
+        if (pick_pending)            return 0.10;        // native chooser is up; nothing of ours to animate
+        if (js && js->busy())        return 0.0;         // decode/export running → catch texture reloads fast
+        if (live && dirty)           return 1.0 / 60.0;  // debounce countdown ticking
+        return 1.0 / 30.0;                               // idle → cap at ~30fps
+    }
+
     // Draw the whole UI for one frame. Call between ImGui::NewFrame() and ImGui::Render().
     void draw() {
         // ---- Controls ----
@@ -317,10 +327,13 @@ struct StudioUI {
         bool path_enter = ImGui::InputText("##path", input_path, IM_ARRAYSIZE(input_path),
                                            ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::SameLine();
-        bool picking = pick_fut.valid();
-        ImGui::BeginDisabled(picking);
-        if (ImGui::Button(picking ? "Dang mo..." : "Browse...", ImVec2(-1, 0)))
-            pick_fut = std::async(std::launch::async, pick_file);   // off the UI thread → no freeze
+        ImGui::BeginDisabled(pick_pending);
+        if (ImGui::Button(pick_pending ? "Dang mo..." : "Browse...", ImVec2(-1, 0))) {
+            pick_pending = true;                                    // native panel, opens instantly
+            macos_choose_file([this](std::string p) {               // fires on the main thread
+                pick_path = std::move(p); pick_ready = true; pick_pending = false;
+            });
+        }
         ImGui::EndDisabled();
         if (path_enter) start_process();   // paste a file path OR stream URL (m3u8/http) + Enter
         ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
@@ -522,11 +535,13 @@ struct StudioUI {
         }
         ImGui::End();
 
-        // ---- async file chooser finished? (UI thread reads the picked path) ----
-        if (pick_fut.valid() &&
-            pick_fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            std::string f = pick_fut.get();
-            if (!f.empty()) { std::snprintf(input_path, sizeof(input_path), "%s", f.c_str()); start_process(); }
+        // ---- native file chooser finished? (handler ran on this thread; just consume) ----
+        if (pick_ready) {
+            pick_ready = false;
+            if (!pick_path.empty()) {
+                std::snprintf(input_path, sizeof(input_path), "%s", pick_path.c_str());
+                start_process();
+            }
         }
 
         // ---- drain finished jobs (UI thread owns the graphics context) ----
@@ -563,6 +578,16 @@ struct StudioUI {
             } else {
                 status = "Decode OK nhung khong upload duoc texture.";
             }
+        }
+
+        // ---- modal dim while the native file chooser is open (reads as "busy", not frozen) ----
+        if (pick_pending) {
+            ImDrawList* fg = ImGui::GetForegroundDrawList();
+            ImVec2 sz = ImGui::GetIO().DisplaySize;
+            fg->AddRectFilled(ImVec2(0, 0), sz, IM_COL32(0, 0, 0, 140));   // translucent scrim
+            const char* msg = u8"Chọn file trong hộp thoại hệ thống…  (Esc để hủy)";
+            ImVec2 ts = ImGui::CalcTextSize(msg);
+            fg->AddText(ImVec2((sz.x - ts.x) * 0.5f, (sz.y - ts.y) * 0.5f), IM_COL32(235, 235, 235, 255), msg);
         }
     }
 };

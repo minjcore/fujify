@@ -209,9 +209,12 @@ static inline std::string build_auth_json(const char* mode, const std::string& e
     return buf;
 }
 
-// Native macOS open dialog via osascript (no extra framework). Returns "" on cancel.
-// `activate` brings the chooser frontmost so ESC / Cancel reach it (Esc → try swallows
-// the user-cancelled error → no output → ""); the app keeps running, no quit.
+// Native AppKit file chooser (implemented in fujify_macos.mm) — shows instantly, modeless,
+// calls `done` on the main thread with the chosen path ("" on Cancel/Esc). Preferred over
+// pick_file() below, whose osascript runtime cold-starts ~2s and blocks.
+void macos_choose_file(const std::function<void(std::string)>& done);
+
+// Legacy osascript open dialog (kept as a fallback). Returns "" on cancel.
 static inline std::string pick_file() {
     const char* cmd =
         "osascript -e 'activate' -e 'try' "

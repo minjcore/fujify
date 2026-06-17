@@ -68,7 +68,7 @@ int main(int, char**) {
     {
         StudioUI ui("OpenGL", ops);   // owns engine state; joins worker + stops daemon on scope exit
         while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
+            glfwWaitEventsTimeout(ui.frame_timeout());   // sleep when idle instead of spinning 60fps
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
