@@ -48,12 +48,13 @@ PLIST
 SIGN=(codesign --force --timestamp --options runtime --entitlements "$ENT" --sign "$DEV_ID")
 
 echo "==> sign nested code inside-out (Developer ID)"
-# every Mach-O the engine loads, then the engine exe, glfw, main binary, finally the app
+# bundled frameworks (glfw, vulkan loader, MoltenVK) + every Mach-O the engine loads,
+# then the engine exe, the main binary, finally the app.
+for lib in "$APP/Contents/Frameworks/"*.dylib; do "${SIGN[@]}" "$lib"; done
 find "$APP/Contents/Resources/engine" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 \
   | while IFS= read -r -d '' lib; do "${SIGN[@]}" "$lib"; done
 "${SIGN[@]}" "$APP/Contents/Resources/engine/fujify-engine"
-"${SIGN[@]}" "$APP/Contents/Frameworks/libglfw.3.dylib"
-"${SIGN[@]}" "$APP/Contents/MacOS/fujify"
+"${SIGN[@]}" "$APP/Contents/MacOS/fujify_vk"
 "${SIGN[@]}" "$APP"
 codesign --verify --strict --verbose=2 "$APP" && echo "   app signature ok"
 

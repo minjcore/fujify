@@ -615,7 +615,15 @@ struct StudioUI {
         ImGui::Checkbox("Live preview", &live);
         ImGui::SameLine(); ImGui::TextDisabled(live ? "(tu apply sau ~0.35s)" : "(bam Load/Apply)");
         // No disable on busy: jobs are queued. Previews coalesce; exports run FIFO.
-        if (ImGui::Button("Load / Apply", ImVec2(-1, 36))) { start_process(); dirty = false; }
+        if (ImGui::Button("Load / Apply", ImVec2(-90, 36))) { start_process(); dirty = false; }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset", ImVec2(-1, 36))) {
+            use_temp = false; temp = 5200.f; tint = 0.f; wb_auto = false;
+            brightness = 0.f; contrast = 0.f; shadows = 0.f; highlights = 0.f; preset_idx = 0;
+            pu = use_temp; pw = wb_auto; pp = preset_idx;             // sync snapshot (no double-fire)
+            pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
+            start_process(); dirty = false;
+        }
         if (live && dirty && (ImGui::GetTime() - last_change) > 0.35) { start_process(); dirty = false; }
 
         if (js->busy()) {

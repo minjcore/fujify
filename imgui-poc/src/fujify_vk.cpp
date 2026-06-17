@@ -285,7 +285,22 @@ static bool vk_upload_texture_from_file(const char* path, VkTexture& t, Histogra
 
 // ---- app ----------------------------------------------------------------
 int main(int, char**) {
-    setenv("VK_ICD_FILENAMES", MOLTENVK_ICD, 0);   // help the loader find MoltenVK (no overwrite)
+    // Prefer a MoltenVK ICD bundled inside the .app (standalone); else the system path.
+    {
+        char exe[4096]; uint32_t sz = sizeof(exe);
+        if (_NSGetExecutablePath(exe, &sz) == 0) {
+            std::string d(exe); auto s = d.find_last_of('/');
+            if (s != std::string::npos) {
+                std::string icd = d.substr(0, s) + "/../Resources/vulkan/icd.d/MoltenVK_icd.json";
+                if (FILE* f = std::fopen(icd.c_str(), "rb")) {
+                    std::fclose(f);
+                    setenv("VK_ICD_FILENAMES", icd.c_str(), 1);
+                    setenv("VK_DRIVER_FILES", icd.c_str(), 1);
+                }
+            }
+        }
+    }
+    setenv("VK_ICD_FILENAMES", MOLTENVK_ICD, 0);   // fallback (no overwrite) — system MoltenVK
     setenv("VK_DRIVER_FILES", MOLTENVK_ICD, 0);
 
     glfwSetErrorCallback(glfw_error_callback);
