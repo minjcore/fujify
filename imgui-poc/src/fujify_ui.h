@@ -105,6 +105,7 @@ struct StudioUI {
     std::string ex_status, status;
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
+    float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
     Histogram hist;   // RGB histogram of the current preview
     std::vector<std::string> recents;   // recently opened images (persisted)
     std::vector<EditState> snaps;       // saved looks (in-memory, this session)
@@ -140,6 +141,9 @@ struct StudioUI {
         Task t; t.kind = k; t.input = input_path;
         t.use_temp = use_temp; t.wb_auto = wb_auto; t.temp = temp; t.tint = tint;
         t.br = brightness; t.co = contrast; t.sh = shadows; t.hi = highlights; t.preset = preset_idx;
+        if (!crop_mode) {   // while selecting, show full image; otherwise apply the crop
+            t.crop[0] = crop_x0; t.crop[1] = crop_y0; t.crop[2] = crop_x1; t.crop[3] = crop_y1;
+        }
         return t;
     }
     void start_process() {
@@ -444,24 +448,50 @@ struct StudioUI {
             ImGui::Text("%d x %d px", tex_w, tex_h);
             ImGui::SameLine(); if (ImGui::SmallButton("Fit")) { zoom = 1.f; pan = ImVec2(0, 0); }
             ImGui::SameLine(); if (ImGui::SmallButton("100%")) { zoom = (fit > 0 ? 1.f / fit : 1.f); pan = ImVec2(0, 0); }
-            ImGui::SameLine(); ImGui::SetNextItemWidth(160);
+            ImGui::SameLine(); ImGui::SetNextItemWidth(130);
             ImGui::SliderFloat("##zoom", &zoom, 0.1f, 8.0f, "zoom %.2fx");
-            ImGui::SameLine(); ImGui::TextDisabled("(cuon = zoom, keo = pan)");
+            ImGui::SameLine();
+            if (ImGui::Checkbox("Crop", &crop_mode)) { zoom = 1.f; pan = ImVec2(0, 0); start_process(); }
+            if (crop_mode) {
+                ImGui::SameLine(); if (ImGui::SmallButton("Apply")) { crop_mode = false; start_process(); }
+                ImGui::SameLine(); if (ImGui::SmallButton("Reset##crop")) { crop_x0 = crop_y0 = 0.f; crop_x1 = crop_y1 = 1.f; start_process(); }
+                ImGui::SameLine(); ImGui::TextDisabled("kéo chọn vùng");
+            }
 
             ImVec2 av = ImGui::GetContentRegionAvail();
             ImVec2 p0 = ImGui::GetCursorScreenPos();
-            ImGui::InvisibleButton("canvas", av, ImGuiButtonFlags_MouseButtonLeft);
-            if (ImGui::IsItemHovered()) { float wl = ImGui::GetIO().MouseWheel;
-                if (wl != 0.f) { zoom *= (1.f + wl * 0.1f); if (zoom < 0.1f) zoom = 0.1f; if (zoom > 8.f) zoom = 8.f; } }
-            if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                ImVec2 d = ImGui::GetIO().MouseDelta; pan.x += d.x; pan.y += d.y; }
             float sc = fit * zoom;
             ImVec2 sz(tex_w * sc, tex_h * sc);
             ImVec2 c(p0.x + av.x * 0.5f + pan.x, p0.y + av.y * 0.5f + pan.y);
             ImVec2 ia(c.x - sz.x * 0.5f, c.y - sz.y * 0.5f), ib(ia.x + sz.x, ia.y + sz.y);
+
+            ImGui::InvisibleButton("canvas", av, ImGuiButtonFlags_MouseButtonLeft);
+            ImGuiIO& io2 = ImGui::GetIO();
+            if (crop_mode) {                              // drag = select crop rect
+                if (ImGui::IsItemActive() && (ib.x > ia.x) && (ib.y > ia.y)) {
+                    ImVec2 m0 = io2.MouseClickedPos[0], m1 = io2.MousePos;
+                    auto nx = [&](float x){ float v=(x-ia.x)/(ib.x-ia.x); return v<0?0:(v>1?1:v); };
+                    auto ny = [&](float y){ float v=(y-ia.y)/(ib.y-ia.y); return v<0?0:(v>1?1:v); };
+                    crop_x0 = nx(std::min(m0.x,m1.x)); crop_x1 = nx(std::max(m0.x,m1.x));
+                    crop_y0 = ny(std::min(m0.y,m1.y)); crop_y1 = ny(std::max(m0.y,m1.y));
+                }
+            } else {                                      // wheel = zoom, drag = pan
+                if (ImGui::IsItemHovered() && io2.MouseWheel != 0.f) {
+                    zoom *= (1.f + io2.MouseWheel * 0.1f); if (zoom<0.1f) zoom=0.1f; if (zoom>8.f) zoom=8.f; }
+                if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+                    pan.x += io2.MouseDelta.x; pan.y += io2.MouseDelta.y; }
+            }
+
             ImDrawList* dl = ImGui::GetWindowDrawList();
             dl->PushClipRect(p0, ImVec2(p0.x + av.x, p0.y + av.y), true);
             dl->AddImage(ops.id(), ia, ib);
+            if (crop_mode) {                              // dim outside + bright selection + border
+                ImVec2 r0(ia.x + crop_x0*(ib.x-ia.x), ia.y + crop_y0*(ib.y-ia.y));
+                ImVec2 r1(ia.x + crop_x1*(ib.x-ia.x), ia.y + crop_y1*(ib.y-ia.y));
+                dl->AddRectFilled(p0, ImVec2(p0.x+av.x, p0.y+av.y), IM_COL32(0,0,0,120));
+                dl->AddImage(ops.id(), r0, r1, ImVec2(crop_x0,crop_y0), ImVec2(crop_x1,crop_y1));
+                dl->AddRect(r0, r1, IM_COL32(255,210,90,255), 0, 0, 2.f);
+            }
             dl->PopClipRect();
 
             // floating bottom-right: reset view (fit)

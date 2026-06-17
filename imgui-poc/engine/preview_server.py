@@ -213,6 +213,19 @@ def _wb_tone(req: dict):
     return wb, tone
 
 
+def _apply_crop(rgb, req):
+    """Crop rgb to the normalized rect req['crop'] = [x0,y0,x1,y1] (0..1). No-op if full."""
+    c = req.get("crop")
+    if not c or len(c) != 4:
+        return rgb
+    h, w = rgb.shape[:2]
+    x0 = max(0, min(w - 1, int(round(c[0] * w)))); x1 = max(x0 + 1, min(w, int(round(c[2] * w))))
+    y0 = max(0, min(h - 1, int(round(c[1] * h)))); y1 = max(y0 + 1, min(h, int(round(c[3] * h))))
+    if x0 == 0 and y0 == 0 and x1 == w and y1 == h:
+        return rgb
+    return rgb[y0:y1, x0:x1]
+
+
 def _load_rgb(mode: str, req: dict):
     """Decode input → (rgb, exif), translating low-level failures into PreviewError."""
     path = req.get("input_path")
@@ -223,8 +236,9 @@ def _load_rgb(mode: str, req: dict):
             path = _video_frame(path)
         if mode == "full":
             loaded = load_image(Path(path).expanduser().resolve())
-            return loaded.rgb, loaded.exif_bytes
-        return _proxy_for(path, int(req.get("max_dim", 1600)))
+            return _apply_crop(loaded.rgb, req), loaded.exif_bytes
+        rgb, exif = _proxy_for(path, int(req.get("max_dim", 1600)))
+        return _apply_crop(rgb, req), exif
     except FileNotFoundError as exc:
         raise PreviewError(ERR_FILE_NOT_FOUND, str(exc)) from exc
     except PreviewError:
