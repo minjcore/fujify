@@ -120,7 +120,8 @@ struct StudioUI {
     int   rotate = 0;   // CW degrees 0/90/180/270
     Histogram hist;   // RGB histogram of the current preview
     std::vector<std::string> recents;   // recently opened images (persisted)
-    std::vector<EditState> snaps;       // saved looks (in-memory, this session)
+    std::vector<EditState> snaps;       // saved look presets (persisted in SQLite)
+    std::vector<long> snap_ids;         // parallel DB row ids for snaps
     std::vector<std::string> lib_names, lib_keys;   // cloud library listing
     // engine
     Daemon daemon;
@@ -142,6 +143,7 @@ struct StudioUI {
         if (const char* h = getenv("HOME"))           // SQLite store for per-image edits
             store.open(std::string(h) + "/.fujify_states.db");
         else store.open("/tmp/.fujify_states.db");
+        store.load_snapshots(snaps, snap_ids);        // restore saved look presets
         if (!cloud_token.empty()) start_lib_list();   // already signed in → show library
         loaded_path = input_path;           // track the first image's state
         EditState e; if (store.load(loaded_path, e)) restore_state(e);   // restore last session's edits
@@ -216,6 +218,7 @@ struct StudioUI {
         e.use_temp = use_temp; e.wb_auto = wb_auto; e.temp = temp; e.tint = tint;
         e.br = brightness; e.co = contrast; e.sh = shadows; e.hi = highlights; e.preset = preset_idx;
         snaps.push_back(e);
+        snap_ids.push_back(store.add_snapshot(e));   // persist the look preset
     }
     void apply_snap(const EditState& e) {
         use_temp = e.use_temp; wb_auto = e.wb_auto; temp = e.temp; tint = e.tint;
@@ -438,23 +441,40 @@ struct StudioUI {
             pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
             start_process(); dirty = false;
         }
+        // forget this image's saved edits in the DB + reset to neutral
+        if (ImGui::SmallButton(u8"🗑 Xóa state (DB)") && !loaded_path.empty()) {
+            store.remove(loaded_path);
+            restore_state(EditState());
+            start_process(); dirty = false;
+            status = "Đã xóa state của ảnh này khỏi DB.";
+        }
 
-        ImGui::SeparatorText("Snapshots");
+        ImGui::SeparatorText("Snapshots (look preset, lưu DB)");
         if (ImGui::SmallButton("+ Save state")) save_snap();
+        int del = -1;
         for (size_t i = 0; i < snaps.size(); i++) {
             ImGui::SameLine();
             ImGui::PushID((int)i);
             char lbl[8]; std::snprintf(lbl, sizeof(lbl), "S%d", (int)i + 1);
             if (ImGui::SmallButton(lbl)) apply_snap(snaps[i]);
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) del = (int)i;   // right-click xóa
             if (ImGui::IsItemHovered()) {
                 const EditState& e = snaps[i];
-                ImGui::SetTooltip("temp %s  tint %.0f\nbright %.2f  contrast %.2f\nshadow %.2f  high %.2f  preset %s",
+                ImGui::SetTooltip("temp %s  tint %.0f\nbright %.2f  contrast %.2f\nshadow %.2f  high %.2f  preset %s"
+                                  "\n(chuột phải để xóa)",
                     e.use_temp ? std::to_string((int)e.temp).c_str() : "off", e.tint,
                     e.br, e.co, e.sh, e.hi, kPresets[e.preset]);
             }
             ImGui::PopID();
         }
-        if (!snaps.empty()) { ImGui::SameLine(); if (ImGui::SmallButton("x")) snaps.clear(); }
+        if (del >= 0 && del < (int)snap_ids.size()) {   // delete one preset (UI + DB)
+            store.del_snapshot(snap_ids[del]);
+            snaps.erase(snaps.begin() + del); snap_ids.erase(snap_ids.begin() + del);
+        }
+        if (!snaps.empty()) {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("x")) { store.clear_snapshots(); snaps.clear(); snap_ids.clear(); }
+        }
 
         ImGui::SeparatorText(u8"Save → target dung lượng");
         ImGui::SetNextItemWidth(110); ImGui::InputInt("KB", &target_kb);

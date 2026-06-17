@@ -6,6 +6,7 @@
 #pragma once
 #include <sqlite3.h>
 #include <string>
+#include <vector>
 
 // Forward-uses EditState (defined in fujify_ui.h before this header is included).
 struct EditState;
@@ -20,6 +21,11 @@ public:
             "temp REAL, tint REAL, br REAL, co REAL, sh REAL, hi REAL,"
             "preset INT, c0 REAL, c1 REAL, c2 REAL, c3 REAL, rotate INT)";
         sqlite3_exec(db, ddl, nullptr, nullptr, nullptr);
+        const char* ddl2 =
+            "CREATE TABLE IF NOT EXISTS snapshot("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, use_temp INT, wb_auto INT,"
+            "temp REAL, tint REAL, br REAL, co REAL, sh REAL, hi REAL, preset INT)";
+        sqlite3_exec(db, ddl2, nullptr, nullptr, nullptr);
         sqlite3_exec(db, "PRAGMA journal_mode=WAL", nullptr, nullptr, nullptr);
     }
     ~StateStore() { if (db) sqlite3_close(db); }
@@ -47,6 +53,16 @@ public:
         sqlite3_finalize(st);
     }
 
+    void remove(const std::string& key) {
+        if (!db) return;
+        sqlite3_stmt* st = nullptr;
+        if (sqlite3_prepare_v2(db, "DELETE FROM edit_state WHERE path=?", -1, &st, nullptr) != SQLITE_OK)
+            return;
+        sqlite3_bind_text(st, 1, key.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_step(st);
+        sqlite3_finalize(st);
+    }
+
     bool load(const std::string& key, EditState& e) {
         if (!db) return false;
         const char* sql = "SELECT use_temp,wb_auto,temp,tint,br,co,sh,hi,preset,"
@@ -70,6 +86,49 @@ public:
         sqlite3_finalize(st);
         return found;
     }
+
+    // ---- snapshots: persistent look presets (not tied to an image) ----
+    long add_snapshot(const EditState& e) {
+        if (!db) return -1;
+        const char* sql = "INSERT INTO snapshot(use_temp,wb_auto,temp,tint,br,co,sh,hi,preset) "
+                          "VALUES(?,?,?,?,?,?,?,?,?)";
+        sqlite3_stmt* st = nullptr;
+        if (sqlite3_prepare_v2(db, sql, -1, &st, nullptr) != SQLITE_OK) return -1;
+        sqlite3_bind_int(st, 1, e.use_temp); sqlite3_bind_int(st, 2, e.wb_auto);
+        sqlite3_bind_double(st, 3, e.temp); sqlite3_bind_double(st, 4, e.tint);
+        sqlite3_bind_double(st, 5, e.br);   sqlite3_bind_double(st, 6, e.co);
+        sqlite3_bind_double(st, 7, e.sh);   sqlite3_bind_double(st, 8, e.hi);
+        sqlite3_bind_int(st, 9, e.preset);
+        sqlite3_step(st);
+        sqlite3_finalize(st);
+        return (long)sqlite3_last_insert_rowid(db);
+    }
+    void load_snapshots(std::vector<EditState>& out, std::vector<long>& ids) {
+        out.clear(); ids.clear();
+        if (!db) return;
+        sqlite3_stmt* st = nullptr;
+        const char* sql = "SELECT id,use_temp,wb_auto,temp,tint,br,co,sh,hi,preset "
+                          "FROM snapshot ORDER BY id";
+        if (sqlite3_prepare_v2(db, sql, -1, &st, nullptr) != SQLITE_OK) return;
+        while (sqlite3_step(st) == SQLITE_ROW) {
+            ids.push_back((long)sqlite3_column_int64(st, 0));
+            EditState e;
+            e.use_temp = sqlite3_column_int(st, 1) != 0; e.wb_auto = sqlite3_column_int(st, 2) != 0;
+            e.temp = (float)sqlite3_column_double(st, 3); e.tint = (float)sqlite3_column_double(st, 4);
+            e.br = (float)sqlite3_column_double(st, 5); e.co = (float)sqlite3_column_double(st, 6);
+            e.sh = (float)sqlite3_column_double(st, 7); e.hi = (float)sqlite3_column_double(st, 8);
+            e.preset = sqlite3_column_int(st, 9);
+            out.push_back(e);
+        }
+        sqlite3_finalize(st);
+    }
+    void del_snapshot(long id) {
+        if (!db) return;
+        sqlite3_stmt* st = nullptr;
+        if (sqlite3_prepare_v2(db, "DELETE FROM snapshot WHERE id=?", -1, &st, nullptr) != SQLITE_OK) return;
+        sqlite3_bind_int64(st, 1, id); sqlite3_step(st); sqlite3_finalize(st);
+    }
+    void clear_snapshots() { if (db) sqlite3_exec(db, "DELETE FROM snapshot", nullptr, nullptr, nullptr); }
 
 private:
     sqlite3* db = nullptr;
