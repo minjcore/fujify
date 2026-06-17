@@ -683,8 +683,25 @@ struct StudioUI {
             }
             dl->PopClipRect();
 
-            // floating bottom-right: reset view (fit)
+            // floating bottom-right: mini RGB histogram next to the Fit-view button
             ImVec2 bsz(96, 26);
+            if (hist.valid) {
+                ImVec2 hsz(150, 60);
+                ImVec2 hp(p0.x + av.x - bsz.x - 12 - hsz.x - 8, p0.y + av.y - hsz.y - 12);
+                ImVec2 he(hp.x + hsz.x, hp.y + hsz.y);
+                dl->AddRectFilled(hp, he, IM_COL32(10, 10, 12, 205));
+                auto mplot = [&](const float* hbin, ImU32 col) {
+                    for (int i = 0; i < kHistBins; i++) {
+                        float v = std::sqrt(hbin[i] / hist.maxv);
+                        float x0 = hp.x + hsz.x * i / kHistBins, x1 = hp.x + hsz.x * (i + 1) / kHistBins;
+                        dl->AddRectFilled(ImVec2(x0, hp.y + hsz.y * (1.f - v)), ImVec2(x1, he.y), col);
+                    }
+                };
+                mplot(hist.r, IM_COL32(255, 70, 70, 130));
+                mplot(hist.g, IM_COL32(70, 225, 110, 130));
+                mplot(hist.b, IM_COL32(90, 140, 255, 130));
+                dl->AddRect(hp, he, IM_COL32(80, 80, 84, 255));
+            }
             ImGui::SetCursorScreenPos(ImVec2(p0.x + av.x - bsz.x - 12, p0.y + av.y - bsz.y - 12));
             if (ImGui::Button("⤢ Fit view", bsz)) { zoom = 1.f; pan = ImVec2(0, 0); }
         } else {
