@@ -106,6 +106,7 @@ struct StudioUI {
     int   target_kb = 500;       // save-to-target-size
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
+    bool  premium = false;                           // Premium tắt ads (persisted)
     std::string ex_status, status, ex_path;   // ex_path: last exported/saved file → click to reveal in Finder
     bool pick_pending = false, pick_ready = false, pick_multi = false;     // native chooser (modeless)
     std::vector<std::string> pick_paths;                                   // chooser result
@@ -266,12 +267,14 @@ struct StudioUI {
         auto strip = [](char* s) { for (char* p = s; *p; ++p) if (*p == '\n' || *p == '\r') { *p = 0; break; } };
         if (std::fgets(e, sizeof(e), f)) { strip(e); cloud_email = e; }
         if (std::fgets(t, sizeof(t), f)) { strip(t); cloud_token = t; }
+        char p[8] = {0};
+        if (std::fgets(p, sizeof(p), f)) { strip(p); premium = (p[0] == '1'); }
         std::fclose(f);
     }
     void save_session() {
         FILE* f = std::fopen(session_path().c_str(), "w");
         if (!f) return;
-        std::fprintf(f, "%s\n%s\n", cloud_email.c_str(), cloud_token.c_str());
+        std::fprintf(f, "%s\n%s\n%d\n", cloud_email.c_str(), cloud_token.c_str(), premium ? 1 : 0);
         std::fclose(f);
     }
 
@@ -328,6 +331,36 @@ struct StudioUI {
     }
 
     // RGB histogram (3 channels overlaid, additive translucent bars).
+    // Freemium: free users see a rotating ad banner; Premium removes it.
+    void draw_ads() {
+        if (premium) {
+            ImGui::SeparatorText(u8"★ Premium");
+            ImGui::TextDisabled(u8"✓ Đã tắt quảng cáo. Cảm ơn bạn!");
+            if (ImGui::SmallButton("Huy Premium (test)")) { premium = false; save_session(); }
+            return;
+        }
+        ImGui::SeparatorText(u8"Quảng cáo");
+        static const struct { const char* text; const char* url; } kAds[] = {
+            {u8"Fuji-fy Storage — luu RAW khong lo day may", "https://fujify.app/pricing"},
+            {u8"Nang Premium — tat ads + storage x10", "https://fujify.app/pricing"},
+            {u8"Khoa hoc chinh anh RAW cho nguoi moi", "https://fujify.app"},
+        };
+        const int n = IM_ARRAYSIZE(kAds);
+        int idx = ((int)(ImGui::GetTime() / 5.0)) % n;     // rotate every 5s
+        ImVec2 p = ImGui::GetCursorScreenPos();
+        float w = ImGui::GetContentRegionAvail().x, h = 52.f;
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(p, ImVec2(p.x + w, p.y + h), IM_COL32(28, 30, 40, 255), 4.f);
+        dl->AddRect(p, ImVec2(p.x + w, p.y + h), IM_COL32(80, 82, 92, 255), 4.f);
+        ImGui::InvisibleButton("ad_banner", ImVec2(w, h));
+        if (ImGui::IsItemClicked()) open_url(kAds[idx].url);
+        if (ImGui::IsItemHovered()) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+        dl->AddRectFilled(p, ImVec2(p.x + 30, p.y + 15), IM_COL32(205, 170, 55, 255));  // "AD" tag
+        dl->AddText(ImVec2(p.x + 6, p.y + 1), IM_COL32(20, 20, 20, 255), "AD");
+        dl->AddText(ImVec2(p.x + 10, p.y + 24), IM_COL32(235, 235, 235, 255), kAds[idx].text);
+        if (ImGui::SmallButton(u8"Nang Premium de tat ads")) { premium = true; save_session(); }
+    }
+
     void draw_histogram() {
         ImGui::SeparatorText("Histogram");
         if (!hist.valid) { ImGui::TextDisabled("(chua co anh)"); return; }
@@ -543,6 +576,7 @@ struct StudioUI {
         }
         ImGui::Separator();
         ImGui::TextWrapped("%s", status.c_str());
+        draw_ads();
         ImGui::End();
 
         // ---- Preview (zoom/pan) ----

@@ -230,6 +230,15 @@ static inline std::string pick_file() {
     return out;
 }
 
+// Open a URL in the default browser (for ad click-through).
+static inline void open_url(const std::string& url) {
+    if (url.empty()) return;
+    std::string esc;
+    for (char c : url) { if (c == '\'') esc += "'\\''"; else esc += c; }
+    std::string cmd = "open '" + esc + "' >/dev/null 2>&1 &";
+    std::system(cmd.c_str());
+}
+
 // Reveal a file in Finder (selects it); falls back to opening its folder. Async (& + nohup-free).
 static inline void reveal_in_finder(const std::string& path) {
     if (path.empty()) return;
