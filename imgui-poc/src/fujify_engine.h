@@ -418,6 +418,13 @@ static inline void compute_histogram(const unsigned char* rgba, int w, int h, Hi
     o->maxv = m; o->valid = true;
 }
 
+// A saved edit "state" (look) — restore to flip between looks / A-B compare.
+struct EditState {
+    bool use_temp = false, wb_auto = false;
+    float temp = 5200.f, tint = 0.f, br = 0.f, co = 0.f, sh = 0.f, hi = 0.f;
+    int preset = 0;
+};
+
 struct TextureOps {
     // Upload kPreviewPath into a GPU texture; write pixel size to *w,*h and fill *hist
     // from the decoded pixels. Runs on the UI thread (owns the GL/Vulkan context).
@@ -443,6 +450,7 @@ struct StudioUI {
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     Histogram hist;   // RGB histogram of the current preview
     std::vector<std::string> recents;   // recently opened images (persisted)
+    std::vector<EditState> snaps;       // saved looks (in-memory, this session)
     // engine
     Daemon daemon;
     std::unique_ptr<JobSystem> js;
@@ -477,6 +485,21 @@ struct StudioUI {
     void start_process() {
         if (recents.empty() || recents.front() != input_path) add_recent(input_path);
         js->submit(make_task(Task::Preview));
+    }
+
+    // --- snapshots: save / restore the current look (WB+tone+preset) ---
+    void save_snap() {
+        EditState e;
+        e.use_temp = use_temp; e.wb_auto = wb_auto; e.temp = temp; e.tint = tint;
+        e.br = brightness; e.co = contrast; e.sh = shadows; e.hi = highlights; e.preset = preset_idx;
+        snaps.push_back(e);
+    }
+    void apply_snap(const EditState& e) {
+        use_temp = e.use_temp; wb_auto = e.wb_auto; temp = e.temp; tint = e.tint;
+        brightness = e.br; contrast = e.co; shadows = e.sh; highlights = e.hi; preset_idx = e.preset;
+        pu = use_temp; pw = wb_auto; pp = preset_idx;             // sync snapshot (no double-fire)
+        pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
+        start_process(); dirty = false;
     }
     void start_export(bool all) {
         Task t = make_task(Task::Export);
@@ -625,6 +648,24 @@ struct StudioUI {
             start_process(); dirty = false;
         }
         if (live && dirty && (ImGui::GetTime() - last_change) > 0.35) { start_process(); dirty = false; }
+
+        // ---- snapshots: save the current look, click S# to restore ----
+        ImGui::SeparatorText("Snapshots");
+        if (ImGui::SmallButton("+ Save state")) save_snap();
+        for (size_t i = 0; i < snaps.size(); i++) {
+            ImGui::SameLine();
+            ImGui::PushID((int)i);
+            char lbl[8]; std::snprintf(lbl, sizeof(lbl), "S%d", (int)i + 1);
+            if (ImGui::SmallButton(lbl)) apply_snap(snaps[i]);
+            if (ImGui::IsItemHovered()) {
+                const EditState& e = snaps[i];
+                ImGui::SetTooltip("temp %s  tint %.0f\nbright %.2f  contrast %.2f\nshadow %.2f  high %.2f  preset %s",
+                    e.use_temp ? std::to_string((int)e.temp).c_str() : "off", e.tint,
+                    e.br, e.co, e.sh, e.hi, kPresets[e.preset]);
+            }
+            ImGui::PopID();
+        }
+        if (!snaps.empty()) { ImGui::SameLine(); if (ImGui::SmallButton("x")) snaps.clear(); }
 
         if (js->busy()) {
             ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(-1, 0), "...");
