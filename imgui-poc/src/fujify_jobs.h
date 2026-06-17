@@ -17,6 +17,7 @@ struct Task {
     int   target_kb = 500;                                                // save-target-only
     float crop[4] = {0.f, 0.f, 1.f, 1.f};                                 // normalized crop rect
     int   rotate = 0;                                                     // CW degrees 0/90/180/270
+    std::vector<std::string> grid;                                        // ≥2 files → contact-sheet preview
     std::string token;                                                    // upload/library
     std::string email, password; bool signup = false;                     // auth-only
     std::string lib_key;                                                  // library_get-only
@@ -76,6 +77,13 @@ private:
         if (t.kind == Task::Preview) {
             std::string req = build_json("preview", t.input, kPreviewPath, kProxyMaxDim,
                 t.use_temp, t.temp, t.tint, t.wb_auto, t.br, t.co, t.sh, t.hi, kPresetArg[t.preset], 0, t.crop, t.rotate);
+            if (t.grid.size() >= 2 && !req.empty() && req.back() == '}') {   // add "grid":[...]
+                std::string arr = ",\"grid\":[";
+                for (size_t i = 0; i < t.grid.size(); ++i)
+                    arr += (i ? ",\"" : "\"") + t.grid[i] + "\"";
+                arr += "]";
+                req.insert(req.size() - 1, arr);
+            }
             EngineResult er = engine_run(*dmn, req);
             r.ok = er.ok; r.ms = er.elapsed_ms; r.reload_texture = er.ok;
             r.log = er.ok ? ("OK — engine " + std::to_string(er.elapsed_ms) + " ms (proxy)")

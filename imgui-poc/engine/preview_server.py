@@ -80,6 +80,14 @@ from core.white_balance import WhiteBalanceSettings, apply_white_balance  # noqa
 
 VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
 
+# Network streams only: forbid local-file protocols so a malicious playlist (.m3u8) can't
+# make ffmpeg read files off this machine via file:// / concat: / data:. Applied to URL
+# inputs only — local files still use ffmpeg's default protocols.
+_NET_PROTOCOLS = "https,tls,tcp,http,crypto,hls,httpproxy"
+
+def _net_input_opts(src) -> list:
+    return ["-protocol_whitelist", _NET_PROTOCOLS] if _is_url(src) else []
+
 # Cache only the most recent image (keeps memory to one proxy). Key = (path, mtime, max_dim).
 _cache: dict = {}
 
@@ -105,11 +113,12 @@ def _video_frame(path: str) -> str:
         src, key = str(p), abs(hash((str(p), p.stat().st_mtime)))
     out = Path(tempfile.gettempdir()) / f"fujify_vframe_{key}.jpg"
     if not out.exists():
+        net = _net_input_opts(src)           # restrict protocols for URL streams
         # seek ~1s in; fall back to first frame if shorter / live stream
-        cmd = [FFMPEG, "-y", "-ss", "1", "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
+        cmd = [FFMPEG, "-y", *net, "-ss", "1", "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
         r = subprocess.run(cmd, capture_output=True, timeout=60)
         if r.returncode != 0 or not out.exists():
-            cmd = [FFMPEG, "-y", "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
+            cmd = [FFMPEG, "-y", *net, "-i", src, "-frames:v", "1", "-q:v", "2", str(out)]
             r = subprocess.run(cmd, capture_output=True, timeout=60)
             if r.returncode != 0:
                 raise PreviewError(ERR_DECODE_FAILED,
@@ -171,13 +180,14 @@ def _video_export(req: dict) -> dict:
         vf = "lut3d=" + _build_lut(s)
     except Exception:
         vf = _ffmpeg_look_filters(s)
-    cmd = [FFMPEG, "-y", "-i", str(src), "-vf", vf,
+    net = _net_input_opts(src)               # restrict protocols for URL streams
+    cmd = [FFMPEG, "-y", *net, "-i", str(src), "-vf", vf,
            "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p",
            "-c:a", "copy", str(out)]
     res = subprocess.run(cmd, capture_output=True)
     if res.returncode != 0:
         # retry dropping audio (some inputs have none / incompatible audio)
-        cmd = [FFMPEG, "-y", "-i", str(src), "-vf", vf,
+        cmd = [FFMPEG, "-y", *net, "-i", str(src), "-vf", vf,
                "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p", "-an", str(out)]
         res = subprocess.run(cmd, capture_output=True)
         if res.returncode != 0:
@@ -204,8 +214,9 @@ def _proxy_for(path: str, max_dim: int):
     if ent is None:
         loaded = load_image(p)
         ent = {"rgb": _downscale(loaded.rgb, max_dim), "exif": None}
-        _cache.clear()  # drop older entries → bounded memory
         _cache[key] = ent
+        while len(_cache) > 16:  # bounded LRU — hold a grid's cells so live edits don't re-decode
+            _cache.pop(next(iter(_cache)))
     return ent["rgb"], ent["exif"]
 
 
@@ -248,6 +259,35 @@ def _apply_crop(rgb, req):
     if x0 == 0 and y0 == 0 and x1 == w and y1 == h:
         return rgb
     return rgb[y0:y1, x0:x1]
+
+
+def _grid_render(paths, wb, tone):
+    """Tile the selected images into one grid image (contact-sheet), applying the current
+    WB/tone to every cell — so a look/preset can be previewed across the whole set at once.
+    Returns a single RGB float image (shown in the app's one texture)."""
+    import math
+    cell_dim = 640                              # per-cell proxy cap (keeps the grid bounded)
+    cells = []
+    for p in paths:
+        try:
+            rgb, _ = _proxy_for(p, cell_dim)
+            cells.append(np.clip(apply_tone(apply_white_balance(rgb, wb), tone), 0.0, 1.0))
+        except Exception:                       # unreadable file → grey placeholder cell
+            cells.append(np.full((cell_dim * 2 // 3, cell_dim, 3), 0.15, dtype=np.float32))
+    n = len(cells)
+    cols = int(math.ceil(math.sqrt(n)))
+    rows = int(math.ceil(n / cols))
+    ch = max(c.shape[0] for c in cells)
+    cw = max(c.shape[1] for c in cells)
+    pad = 8
+    canvas = np.full((rows * ch + (rows - 1) * pad, cols * cw + (cols - 1) * pad, 3),
+                     0.06, dtype=np.float32)    # dark gutter between cells
+    for i, c in enumerate(cells):
+        r, k = divmod(i, cols)
+        oy = r * (ch + pad) + (ch - c.shape[0]) // 2   # center (letterbox) in the cell
+        ox = k * (cw + pad) + (cw - c.shape[1]) // 2
+        canvas[oy:oy + c.shape[0], ox:ox + c.shape[1]] = c
+    return canvas
 
 
 def _load_rgb(mode: str, req: dict):
@@ -452,8 +492,12 @@ def _handle(req: dict) -> dict:
     quality = int(req.get("quality", 90))
     wb, tone = _wb_tone(req)
 
-    rgb, exif = _load_rgb(mode, req)
-    processed = apply_tone(apply_white_balance(rgb, wb), tone)
+    grid = req.get("grid")
+    if mode == "preview" and isinstance(grid, list) and len(grid) >= 2:
+        processed, exif = _grid_render(grid, wb, tone), None   # contact-sheet of the selection
+    else:
+        rgb, exif = _load_rgb(mode, req)
+        processed = apply_tone(apply_white_balance(rgb, wb), tone)
     try:
         save_jpeg(processed, out, quality=quality, exif_bytes=exif)
     except Exception as exc:  # noqa: BLE001

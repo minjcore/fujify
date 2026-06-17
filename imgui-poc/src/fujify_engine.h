@@ -210,9 +210,10 @@ static inline std::string build_auth_json(const char* mode, const std::string& e
 }
 
 // Native AppKit file chooser (implemented in fujify_macos.mm) — shows instantly, modeless,
-// calls `done` on the main thread with the chosen path ("" on Cancel/Esc). Preferred over
-// pick_file() below, whose osascript runtime cold-starts ~2s and blocks.
-void macos_choose_file(const std::function<void(std::string)>& done);
+// calls `done` on the main thread with the chosen paths (empty on Cancel/Esc). Preferred
+// over pick_file() below, whose osascript runtime cold-starts ~2s and blocks.
+void macos_choose_files(const std::function<void(std::vector<std::string>)>& done,
+                        const std::vector<std::string>& exts, bool multi);
 
 // Legacy osascript open dialog (kept as a fallback). Returns "" on cancel.
 static inline std::string pick_file() {

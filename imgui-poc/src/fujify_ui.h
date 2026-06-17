@@ -103,7 +103,9 @@ struct StudioUI {
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
     std::string ex_status, status, ex_path;   // ex_path: last exported/saved file → click to reveal in Finder
-    bool pick_pending = false, pick_ready = false; std::string pick_path;  // native chooser (modeless, non-blocking)
+    bool pick_pending = false, pick_ready = false, pick_multi = false;     // native chooser (modeless)
+    std::vector<std::string> pick_paths;                                   // chooser result
+    std::vector<std::string> grid_files;                                   // ≥2 → contact-sheet preview
     // texture (dims tracked here; pixels live in the backend via ops)
     int   tex_w = 0, tex_h = 0; bool has_tex = false;
     float crop_x0 = 0.f, crop_y0 = 0.f, crop_x1 = 1.f, crop_y1 = 1.f; bool crop_mode = false;
@@ -147,11 +149,21 @@ struct StudioUI {
             t.crop[0] = crop_x0; t.crop[1] = crop_y0; t.crop[2] = crop_x1; t.crop[3] = crop_y1;
         }
         t.rotate = rotate;
+        t.grid = grid_files;
         return t;
     }
     void start_process() {
         if (recents.empty() || recents.front() != input_path) add_recent(input_path);
         js->submit(make_task(Task::Preview));
+    }
+    // Open the native chooser (modeless). exts empty → any file; multi → select several.
+    void open_file_dialog(const std::vector<std::string>& exts = std::vector<std::string>(),
+                          bool multi = false) {
+        if (pick_pending) return;
+        pick_pending = true; pick_multi = multi;
+        macos_choose_files([this](std::vector<std::string> v) {   // fires on the main thread
+            pick_paths = std::move(v); pick_ready = true; pick_pending = false;
+        }, exts, multi);
     }
 
     // --- snapshots: save / restore the current look (WB+tone+preset) ---
@@ -262,6 +274,7 @@ struct StudioUI {
             ImGui::PushID((int)i);
             if (ImGui::Selectable(name.c_str())) {
                 std::snprintf(input_path, sizeof(input_path), "%s", full.c_str());
+                grid_files.clear();        // recents open a single image
                 start_process();
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", full.c_str());
@@ -328,15 +341,21 @@ struct StudioUI {
                                            ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::SameLine();
         ImGui::BeginDisabled(pick_pending);
-        if (ImGui::Button(pick_pending ? "Dang mo..." : "Browse...", ImVec2(-1, 0))) {
-            pick_pending = true;                                    // native panel, opens instantly
-            macos_choose_file([this](std::string p) {               // fires on the main thread
-                pick_path = std::move(p); pick_ready = true; pick_pending = false;
-            });
-        }
+        if (ImGui::Button(pick_pending ? "Dang mo..." : "Browse...", ImVec2(-1, 0)))
+            open_file_dialog();                                     // any image / video
+        if (ImGui::Button(u8"🎬 Video local...", ImVec2(-1, 0)))
+            open_file_dialog({"mp4", "mov", "m4v", "avi", "mkv", "webm"});
+        if (ImGui::Button(u8"▦ Chọn nhiều ảnh (grid)...", ImVec2(-1, 0)))
+            open_file_dialog({}, /*multi=*/true);
         ImGui::EndDisabled();
-        if (path_enter) start_process();   // paste a file path OR stream URL (m3u8/http) + Enter
-        ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
+        if (path_enter) { grid_files.clear(); start_process(); }   // typed path/URL → single image
+        if (!grid_files.empty()) {
+            ImGui::TextDisabled(u8"Grid: %d ảnh — look áp cho tất cả · bấm 1 ô để mở", (int)grid_files.size());
+            ImGui::SameLine();
+            if (ImGui::SmallButton(u8"Bỏ grid")) { grid_files.clear(); start_process(); }
+        } else {
+            ImGui::TextDisabled(u8"file, hoặc dán link stream (m3u8 / http) rồi Enter");
+        }
         draw_recents();
 
         ImGui::SeparatorText("White balance");
@@ -512,6 +531,28 @@ struct StudioUI {
                     zoom *= (1.f + io2.MouseWheel * 0.1f); if (zoom<0.1f) zoom=0.1f; if (zoom>8.f) zoom=8.f; }
                 if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
                     pan.x += io2.MouseDelta.x; pan.y += io2.MouseDelta.y; }
+                // grid: a click (not a pan) on a cell opens that single image
+                if (!grid_files.empty()) {
+                    if (ImGui::IsItemHovered()) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                    ImVec2 d = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 0.f);
+                    if (ImGui::IsItemDeactivated() && std::fabs(d.x) < 4 && std::fabs(d.y) < 4
+                        && ib.x > ia.x && ib.y > ia.y) {
+                        float u = (io2.MousePos.x - ia.x) / (ib.x - ia.x);
+                        float v = (io2.MousePos.y - ia.y) / (ib.y - ia.y);
+                        if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
+                            int n = (int)grid_files.size();
+                            int cols = (int)std::ceil(std::sqrt((double)n));
+                            int rows = (int)std::ceil((double)n / cols);
+                            int col = std::min(cols - 1, (int)(u * cols));
+                            int row = std::min(rows - 1, (int)(v * rows));
+                            int idx = row * cols + col;
+                            if (idx >= 0 && idx < n) {     // open the clicked image (leave grid)
+                                std::snprintf(input_path, sizeof(input_path), "%s", grid_files[idx].c_str());
+                                grid_files.clear(); zoom = 1.f; pan = ImVec2(0, 0); start_process();
+                            }
+                        }
+                    }
+                }
             }
 
             ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -538,8 +579,10 @@ struct StudioUI {
         // ---- native file chooser finished? (handler ran on this thread; just consume) ----
         if (pick_ready) {
             pick_ready = false;
-            if (!pick_path.empty()) {
-                std::snprintf(input_path, sizeof(input_path), "%s", pick_path.c_str());
+            if (!pick_paths.empty()) {
+                grid_files = (pick_multi && pick_paths.size() >= 2) ? pick_paths
+                                                                    : std::vector<std::string>();
+                std::snprintf(input_path, sizeof(input_path), "%s", pick_paths.front().c_str());
                 start_process();
             }
         }
@@ -563,6 +606,7 @@ struct StudioUI {
                 status = r.log;
                 if (r.ok && !r.path.empty()) {
                     std::snprintf(input_path, sizeof(input_path), "%s", r.path.c_str());
+                    grid_files.clear();        // library opens a single image
                     start_process();   // open the downloaded image
                 }
             } else if (r.kind == Task::Export) { ex_status = r.log; if (r.ok && !r.path.empty()) ex_path = r.path; }
