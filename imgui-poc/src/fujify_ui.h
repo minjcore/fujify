@@ -99,7 +99,6 @@ struct StudioUI {
     float pt = 5200.f, pti = 0.f, pb = 0.f, pc = 0.f, ps = 0.f, ph = 0.f;
     // export
     int   ex_fmt_idx = 0, ex_tier_idx = 0; bool ex_brand = true;
-    bool  show_export = false;   // tạm ẩn panel Export
     int   target_kb = 500;       // save-to-target-size
     char  acct_email[128] = "", acct_pw[128] = "";   // login form
     std::string cloud_token, cloud_email;            // session (persisted)
@@ -334,19 +333,16 @@ struct StudioUI {
         ImGui::Separator();
         ImGui::Checkbox("Live preview", &live);
         ImGui::SameLine(); ImGui::TextDisabled(live ? "(tu apply sau ~0.35s)" : "(bam Load/Apply)");
-        // No disable on busy: jobs are queued. Previews coalesce; exports run FIFO.
         if (ImGui::Button("Load / Apply", ImVec2(-90, 36))) { start_process(); dirty = false; }
         ImGui::SameLine();
         if (ImGui::Button("Reset", ImVec2(-1, 36))) {
             use_temp = false; temp = 5200.f; tint = 0.f; wb_auto = false;
             brightness = 0.f; contrast = 0.f; shadows = 0.f; highlights = 0.f; preset_idx = 0;
-            pu = use_temp; pw = wb_auto; pp = preset_idx;             // sync snapshot (no double-fire)
+            pu = use_temp; pw = wb_auto; pp = preset_idx;
             pt = temp; pti = tint; pb = brightness; pc = contrast; ps = shadows; ph = highlights;
             start_process(); dirty = false;
         }
-        if (live && dirty && (ImGui::GetTime() - last_change) > 0.35) { start_process(); dirty = false; }
 
-        // ---- snapshots: save the current look, click S# to restore ----
         ImGui::SeparatorText("Snapshots");
         if (ImGui::SmallButton("+ Save state")) save_snap();
         for (size_t i = 0; i < snaps.size(); i++) {
@@ -364,13 +360,6 @@ struct StudioUI {
         }
         if (!snaps.empty()) { ImGui::SameLine(); if (ImGui::SmallButton("x")) snaps.clear(); }
 
-        if (js->busy()) {
-            ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(-1, 0), "...");
-            ImGui::Text("queue: %d job", js->pending());
-        }
-        ImGui::Separator();
-        ImGui::TextWrapped("%s", status.c_str());
-
         ImGui::SeparatorText(u8"Save → target dung lượng");
         ImGui::SetNextItemWidth(110); ImGui::InputInt("KB", &target_kb);
         if (target_kb < 10) target_kb = 10;
@@ -378,7 +367,23 @@ struct StudioUI {
         ImGui::BeginDisabled(!has_tex || is_video(input_path));
         if (ImGui::Button("Save ~KB", ImVec2(-1, 0))) start_save_target();
         ImGui::EndDisabled();
-        if (is_video(input_path)) ImGui::TextDisabled("(target-size cho ảnh; video dùng Export video)");
+
+        if (is_video(input_path)) {
+            ImGui::SeparatorText(u8"Export video 動画");
+            ImGui::BeginDisabled(!has_tex);
+            if (ImGui::Button("Export video (.mp4)", ImVec2(-1, 30))) start_export(false);
+            ImGui::EndDisabled();
+        } else {
+            ImGui::SeparatorText(u8"Export creative (IG / Threads)");
+            ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
+            ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
+            ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
+            ImGui::BeginDisabled(!has_tex);
+            if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
+            if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
+            ImGui::EndDisabled();
+        }
+        if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
 
         ImGui::SeparatorText(u8"Cloud ☁");
         if (cloud_token.empty()) {
@@ -397,31 +402,15 @@ struct StudioUI {
             ImGui::BeginDisabled(!has_tex || is_video(input_path));
             if (ImGui::Button("Upload to cloud", ImVec2(-1, 0))) start_upload();
             ImGui::EndDisabled();
-            ImGui::TextDisabled("PUT full-res → R2 private (library/<user>/)");
         }
 
-        if (show_export) {   // tạm ẩn nút export (đặt show_export=true để bật lại)
-            bool can_export = has_tex;   // queue handles concurrency; can enqueue while busy
-            if (is_video(input_path)) {
-                ImGui::SeparatorText(u8"Export video 動画");
-                ImGui::TextDisabled("Ap look (temp/brightness/contrast) qua ffmpeg → .mp4");
-                ImGui::BeginDisabled(!can_export);
-                if (ImGui::Button("Export video (.mp4)", ImVec2(-1, 30))) start_export(false);
-                ImGui::EndDisabled();
-            } else {
-                ImGui::SeparatorText(u8"Export creative 書き出し (IG / Threads)");
-                ImGui::SetNextItemWidth(150); ImGui::Combo("format", &ex_fmt_idx, kFormats, IM_ARRAYSIZE(kFormats));
-                ImGui::SameLine(); ImGui::SetNextItemWidth(90); ImGui::Combo("tier", &ex_tier_idx, kTiers, IM_ARRAYSIZE(kTiers));
-                ImGui::Checkbox("Watermark Fuji-Fy", &ex_brand);
-                ImGui::TextDisabled("story 9:16 - feed 4:5 - square 1:1 | hq=2560px ig=2048px");
-                ImGui::BeginDisabled(!can_export);
-                if (ImGui::Button("Export (format dang chon)", ImVec2(-1, 28))) start_export(false);
-                if (ImGui::Button("Export ALL 3 formats", ImVec2(-1, 30))) start_export(true);
-                ImGui::EndDisabled();
-            }
-            if (!has_tex) ImGui::TextDisabled("(Load anh/video truoc khi export)");
-            if (!ex_status.empty()) ImGui::TextWrapped("%s", ex_status.c_str());
+        if (live && dirty && (ImGui::GetTime() - last_change) > 0.35) { start_process(); dirty = false; }
+        if (js->busy()) {
+            ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(-1, 0), "...");
+            ImGui::Text("queue: %d job", js->pending());
         }
+        ImGui::Separator();
+        ImGui::TextWrapped("%s", status.c_str());
         ImGui::End();
 
         // ---- Preview (zoom/pan) ----
@@ -455,6 +444,11 @@ struct StudioUI {
             dl->PushClipRect(p0, ImVec2(p0.x + av.x, p0.y + av.y), true);
             dl->AddImage(ops.id(), ia, ib);
             dl->PopClipRect();
+
+            // floating bottom-right: reset view (fit)
+            ImVec2 bsz(96, 26);
+            ImGui::SetCursorScreenPos(ImVec2(p0.x + av.x - bsz.x - 12, p0.y + av.y - bsz.y - 12));
+            if (ImGui::Button("⤢ Fit view", bsz)) { zoom = 1.f; pan = ImVec2(0, 0); }
         } else {
             ImGui::TextUnformatted("Chua co anh. Nhan 'Load / Apply'.");
         }
