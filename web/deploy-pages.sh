@@ -6,6 +6,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 STAGE="$(mktemp -d)"
-cp -R index.html app.js favicon.svg content "$STAGE/" 2>/dev/null || true
+cp -R index.html app.js favicon.svg og.jpg content "$STAGE/" 2>/dev/null || true
 npx wrangler pages deploy "$STAGE" --project-name fujify --branch=main --commit-dirty=true
 rm -rf "$STAGE"
